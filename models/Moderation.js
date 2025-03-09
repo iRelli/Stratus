@@ -1,5 +1,15 @@
 const { Schema, model } = require('mongoose');
 
+const MessageSchema = new Schema({
+  userId: { type: String, required: true },
+  messages: [
+    {
+      timestamp: { type: Number, required: true },
+      content: { type: String, required: true },
+    },
+  ],
+});
+
 const ModerationSchema = new Schema({
   guildId: { type: String, required: true },
   warnings: { type: Map, of: Number, default: {} },
@@ -12,11 +22,6 @@ const ModerationSchema = new Schema({
   antiRaidThreshold: { type: Number, default: 5 },
   antiRaidAction: { type: String, enum: ['kick', 'ban'], default: 'kick' },
   antiRaidTimeframe: { type: Number, default: 10 },
-
-  rateLimitEnabled: { type: Boolean, default: false },
-  rateLimitThreshold: { type: Number, default: 5 },
-  rateLimitTimeframe: { type: Number, default: 5 },
-  rateLimitDuration: { type: Number, default: 10 },
 
   trustedUsers: {
     type: Map,
@@ -45,6 +50,8 @@ const ModerationSchema = new Schema({
 
   levelingEnabled: { type: Boolean, default: false },
   xpMultiplier: { type: Number, default: 1.0 },
+
+  messages: { type: [MessageSchema], default: [] },
 });
 
 module.exports = model('Moderation', ModerationSchema);

@@ -5,18 +5,16 @@ const Moderation = require('../models/Moderation');
 const Levels = require('discord-xp');
 const AFK = require('../models/afkSchema');
 
-const userMessageCounts = new Map();
-const rateLimitedUsers = new Map();
 const xpCooldowns = new Set(); // ✅ Prevents XP farming by limiting messages per user
 
 module.exports = {
   name: 'messageCreate',
-  async execute(message) {
-    if (!message || !message.author || message.author.bot || !message.guild)
-      return;
+  async execute(client, message) {
+    if (message.author.bot || !message.guild) return;
 
     const guildId = message.guild.id;
     const userId = message.author.id;
+    const now = Date.now();
     let moderationData = await Moderation.findOne({ guildId });
 
     if (!moderationData) return;
@@ -121,76 +119,6 @@ module.exports = {
         message.channel.send(
           `🎉 <@${userId}> has leveled up to **Level ${userLevel.level}!**`,
         );
-      }
-    }
-
-    const now = Date.now();
-
-    // ✅ RATE LIMIT SYSTEM
-    if (moderationData.rateLimitEnabled) {
-      if (!userMessageCounts.has(userId)) {
-        userMessageCounts.set(userId, []);
-      }
-
-      const timestamps = userMessageCounts.get(userId);
-      while (
-        timestamps.length > 0 &&
-        now - timestamps[0] > moderationData.rateLimitTimeframe * 1000
-      ) {
-        timestamps.shift();
-      }
-      timestamps.push(now);
-
-      if (timestamps.length >= moderationData.rateLimitThreshold) {
-        const member = await message.guild.members.fetch(userId);
-        if (!member.moderatable || rateLimitedUsers.has(userId)) return;
-
-        try {
-          await message.channel.permissionOverwrites.edit(userId, {
-            SendMessages: false,
-          });
-
-          rateLimitedUsers.set(userId, true);
-          setTimeout(async () => {
-            await message.channel.permissionOverwrites.delete(userId);
-            rateLimitedUsers.delete(userId);
-          }, moderationData.rateLimitDuration * 1000);
-
-          message.channel.send(
-            `⚠️ <@${userId}> has been temporarily restricted due to excessive messaging.`,
-          );
-
-          if (moderationData.logChannelId) {
-            const logChannel = message.guild.channels.cache.get(
-              moderationData.logChannelId,
-            );
-            if (logChannel) {
-              const rateLimitEmbed = new EmbedBuilder()
-                .setColor('Orange')
-                .setTitle('Rate-Limit Triggered')
-                .addFields(
-                  { name: 'User', value: `<@${userId}>`, inline: true },
-                  {
-                    name: 'Reason',
-                    value: 'Excessive messaging',
-                    inline: false,
-                  },
-                  {
-                    name: 'Slowmode Duration',
-                    value: `${moderationData.rateLimitDuration} seconds`,
-                    inline: true,
-                  },
-                )
-                .setTimestamp();
-
-              logChannel.send({ embeds: [rateLimitEmbed] });
-            }
-          }
-        } catch (error) {
-          console.error(error);
-        }
-
-        userMessageCounts.delete(userId);
       }
     }
   },

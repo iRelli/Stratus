@@ -20,6 +20,15 @@ module.exports = {
     for (const guild of client.guilds.cache.values()) {
       await ensureGuildConfig(guild.id);
     }
+    client.user.setPresence({
+      status: 'dnd',
+      activities: [
+        {
+          name: 'Debugging',
+          type: 'WATCHING',
+        },
+      ],
+    });
   },
 };
 

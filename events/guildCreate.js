@@ -1,27 +1,11 @@
-const mongoose = require('mongoose');
-const Levels = require('discord-xp');
+const { Events } = require('discord.js');
 const Moderation = require('../models/Moderation');
-const WebSocket = require('ws');
-require('dotenv').config();
 
 module.exports = {
-  name: 'ready',
-  async execute(client) {
-    console.log(`🚀 Stratus is online as ${client.user.tag}`);
-
-    // ✅ Connect to MongoDB
-    try {
-      await mongoose.connect(process.env.MONGO_URI, {});
-      console.log('✅ Connected to MongoDB');
-      Levels.setURL(process.env.MONGO_URI);
-    } catch (err) {
-      console.error('❌ MongoDB Connection Error:', err);
-    }
-
-    // ✅ Ensure Default Configuration for All Guilds
-    for (const guild of client.guilds.cache.values()) {
-      await ensureGuildConfig(guild.id);
-    }
+  name: Events.GuildCreate,
+  async execute(guild) {
+    console.log(`✅ Joined a new guild: ${guild.name} (${guild.id})`);
+    await ensureGuildConfig(guild.id);
   },
 };
 
@@ -50,7 +34,7 @@ async function ensureGuildConfig(guildId) {
 
       await moderationData.save();
       console.log(
-        `✅ Created default moderation settings for guild: ${guildId}`,
+        `✅ Created default moderation settings for new guild: ${guildId}`,
       );
     }
   } catch (error) {

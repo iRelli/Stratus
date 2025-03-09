@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "format": "prettier --write \"**/*.{js,jsx}\""
   },
   "keywords": [],
   "author": "",
@@ -18,5 +19,8 @@
     "dotenv": "^16.4.7",
     "mongoose": "^8.10.1",
     "sharp": "^0.33.5"
+  },
+  "devDependencies": {
+    "prettier": "^3.5.3"
   }
 }

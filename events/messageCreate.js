@@ -3,6 +3,7 @@ const axios = require('axios');
 const mongoose = require('mongoose');
 const Moderation = require('../models/Moderation');
 const Levels = require('discord-xp');
+const AFK = require('../models/afkSchema');
 
 const userMessageCounts = new Map();
 const rateLimitedUsers = new Map();
@@ -10,8 +11,9 @@ const xpCooldowns = new Set(); // ✅ Prevents XP farming by limiting messages p
 
 module.exports = {
   name: 'messageCreate',
-  async execute(client, message) {
-    if (message.author.bot || !message.guild) return;
+  async execute(message) {
+    if (!message || !message.author || message.author.bot || !message.guild)
+      return;
 
     const guildId = message.guild.id;
     const userId = message.author.id;
@@ -27,6 +29,19 @@ module.exports = {
 
     // ✅ Check if user is a Trusted User (bypass filtering)
     if (moderationData.trustedUsers.has(userId)) return;
+
+    // ✅ Remove AFK status if the user sends a message
+    try {
+      const afkStatus = await AFK.findOne({ userId });
+      if (afkStatus) {
+        await AFK.findOneAndDelete({ userId });
+        await message.reply(
+          `Welcome back <@${userId}>! Your AFK status has been removed.`,
+        );
+      }
+    } catch (error) {
+      console.error('Error removing AFK status on messageCreate:', error);
+    }
 
     // ✅ MESSAGE FILTERING SYSTEM
     if (moderationData.messageFilterEnabled) {
@@ -63,7 +78,7 @@ module.exports = {
         if (isHateSpeech) {
           await message.delete().catch(() => {});
           message.channel.send(
-            `🚨 <@${userId}>, your message was removed due to inappropriate content.`,
+            `<@${userId}>, your message was removed due to inappropriate content.`,
           );
 
           const logChannel = message.guild.channels.cache.get(

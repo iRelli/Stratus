@@ -1,4 +1,5 @@
 const VoiceMaster = require('../models/VoiceMaster');
+const AFK = require('../models/afkSchema');
 const { ChannelType } = require('discord.js');
 
 module.exports = {
@@ -36,6 +37,19 @@ module.exports = {
             error,
           );
         }
+      }
+
+      // Remove AFK status if the user joins a voice channel
+      try {
+        const afkStatus = await AFK.findOne({ userId: newState.member.id });
+        if (afkStatus) {
+          await AFK.findOneAndDelete({ userId: newState.member.id });
+          newState.member.send(
+            'Welcome back! Your AFK status has been removed because you joined a voice channel.',
+          );
+        }
+      } catch (error) {
+        console.error('Error removing AFK status on voiceStateUpdate:', error);
       }
     }
 

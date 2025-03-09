@@ -31,7 +31,10 @@ module.exports = {
             }
           }, 300000); // 5 minutes in milliseconds
         } catch (error) {
-          console.error('❌ Error creating new temporary voice channel:', error);
+          console.error(
+            '❌ Error creating new temporary voice channel:',
+            error,
+          );
         }
       }
     }
@@ -41,11 +44,16 @@ module.exports = {
       const { channel } = oldState;
 
       // Get VoiceMaster configuration from the database
-      const voiceMasterData = await VoiceMaster.findOne({ guildId: oldState.guild.id });
+      const voiceMasterData = await VoiceMaster.findOne({
+        guildId: oldState.guild.id,
+      });
       if (!voiceMasterData) return;
 
       // Check if the channel is a temporary voice channel and is now empty
-      if (channel.parentId === voiceMasterData.categoryId && channel.members.size === 0) {
+      if (
+        channel.parentId === voiceMasterData.categoryId &&
+        channel.members.size === 0
+      ) {
         // Clear the timeout to delete the channel if it was set
         if (channel.timeout) {
           clearTimeout(channel.timeout);

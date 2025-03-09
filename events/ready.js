@@ -7,9 +7,8 @@ require('dotenv').config();
 module.exports = {
   name: 'ready',
   async execute(client) {
-    console.log(`🚀 Stratus is online as ${client.user.tag}`);
+    console.log(`Bot Online`);
 
-    // ✅ Connect to MongoDB
     try {
       await mongoose.connect(process.env.MONGO_URI, {});
       console.log('✅ Connected to MongoDB');
@@ -18,7 +17,6 @@ module.exports = {
       console.error('❌ MongoDB Connection Error:', err);
     }
 
-    // ✅ Ensure Default Configuration for All Guilds
     for (const guild of client.guilds.cache.values()) {
       await ensureGuildConfig(guild.id);
     }

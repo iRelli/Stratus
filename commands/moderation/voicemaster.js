@@ -19,7 +19,6 @@ module.exports = {
     const subcommand = interaction.options.getSubcommand();
 
     if (subcommand === 'setup') {
-      // Check if the user has the administrator permission
       if (
         !interaction.member.permissions.has(
           PermissionsBitField.Flags.Administrator,
@@ -34,7 +33,6 @@ module.exports = {
       try {
         const guildId = interaction.guild.id;
 
-        // Check if VoiceMaster is already set up
         let voiceMasterData = await VoiceMaster.findOne({ guildId });
         if (voiceMasterData) {
           return interaction.reply({
@@ -43,20 +41,17 @@ module.exports = {
           });
         }
 
-        // Create the category
         const category = await interaction.guild.channels.create({
           name: 'Temporary Channels',
           type: ChannelType.GuildCategory,
         });
 
-        // Create the temporary voice channel
         const voiceChannel = await interaction.guild.channels.create({
           name: 'Join to Create',
           type: ChannelType.GuildVoice,
           parent: category.id,
         });
 
-        // Save the configuration to the database
         voiceMasterData = new VoiceMaster({
           guildId,
           categoryId: category.id,
@@ -64,7 +59,6 @@ module.exports = {
         });
         await voiceMasterData.save();
 
-        // Reply with success message
         return interaction.reply({
           content: `✅ VoiceMaster setup complete. Temporary voice channels will be created under **${category.name}**.`,
           ephemeral: true,

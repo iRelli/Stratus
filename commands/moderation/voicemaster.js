@@ -88,7 +88,7 @@ module.exports = {
         guildId: interaction.guild.id,
         channelId: channel.id,
         categoryId: category.id,
-        name: name,
+        nameS: name,
         limit: limit,
       });
 

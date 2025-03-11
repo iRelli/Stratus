@@ -11,6 +11,10 @@ module.exports = {
 
 async function ensureGuildConfig(guildId) {
   try {
+    if (!guildId) {
+      throw new Error('guildId is undefined');
+    }
+
     let moderationData = await Moderation.findOne({ guildId });
 
     if (!moderationData) {
@@ -22,10 +26,6 @@ async function ensureGuildConfig(guildId) {
         antiRaidThreshold: 5,
         antiRaidAction: 'kick',
         antiRaidTimeframe: 10,
-        rateLimitEnabled: false,
-        rateLimitThreshold: 5,
-        rateLimitTimeframe: 5,
-        rateLimitDuration: 10,
         messageFilterEnabled: false,
         filterLevel: 'normal',
         levelingEnabled: false,

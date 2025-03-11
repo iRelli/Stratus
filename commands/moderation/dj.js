@@ -7,7 +7,7 @@ module.exports = {
     .setDescription('Manage the DJ role for the server.')
     .addStringOption(option => 
       option.setName('rolename')
-        .setDescription('The name of the DJ role')
+        .setDescription('The name of the DJt role')
         .setRequired(true)),
 
   async execute(interaction) {

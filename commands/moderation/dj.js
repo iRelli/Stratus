@@ -3,7 +3,7 @@ const DjRole = require('../../models/djschema'); // Schema for DJ role managemen
 
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName('djrole')
+    .setName('testers')
     .setDescription('Manage the DJ role for the server.')
     .addStringOption(option => 
       option.setName('rolename')

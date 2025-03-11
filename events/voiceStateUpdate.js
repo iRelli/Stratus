@@ -1,106 +1,79 @@
-const VoiceMaster = require('../models/VoiceMaster');
-const AFK = require('../models/afkSchema');
+const VoiceChannelCreate = require('../models/VoiceChannelCreate');
+const VoiceChannelUser = require('../models/VoiceChannelUser');
 const { ChannelType } = require('discord.js');
 
 module.exports = {
   name: 'voiceStateUpdate',
   async execute(oldState, newState) {
-    if (!oldState.channel && newState.channel) {
-      // User joins a voice channel
-      const { channel } = newState;
-      const guildId = newState.guild.id;
+    if (!newState.channelId) return;
 
-      const voiceMasterData = await VoiceMaster.findOne({ guildId });
-      if (!voiceMasterData) return;
+    const guildId = newState.guild.id;
 
-      // Check if the joined channel is the setup channel
-      if (channel.id === voiceMasterData.channelId) {
-        try {
-          // Wait for a short period to ensure the user is fully connected
-          await new Promise(resolve => setTimeout(resolve, 1000));
+    // Fetch the guild's configuration for voice channel creation
+    const voiceChannelCreateData = await VoiceChannelCreate.findOne({ guildId });
+    if (!voiceChannelCreateData || !voiceChannelCreateData.channelId) return;
 
-          // Verify the user is still connected to the "Join to Create" channel
-          const member = await channel.guild.members.fetch(newState.id);
-          if (!member.voice.channel || member.voice.channel.id !== channel.id) {
-            console.log('User is no longer connected to the "Join to Create" channel.');
-            return;
-          }
+    // Check if the user joined the "Join to Create" channel
+    if (newState.channelId === voiceChannelCreateData.channelId) {
+      const userId = newState.member.id;
 
-          // Create a new temporary voice channel
-          const newVoiceChannel = await channel.guild.channels.create({
-            name: `Temp ${newState.member.displayName}`,
-            type: ChannelType.GuildVoice,
-            parent: voiceMasterData.categoryId,
-            permissionOverwrites: [
-              {
-                id: newState.guild.id,
-                deny: ['ViewChannel'],
-              },
-              {
-                id: newState.member.id,
-                allow: ['ViewChannel', 'ManageChannels'],
-              },
-            ],
-          });
-
-          // Move the user to the new temporary voice channel
-          await newState.member.voice.setChannel(newVoiceChannel);
-
-          // Update users in VoiceMaster data
-          voiceMasterData.users.push(newState.member.id);
-          await voiceMasterData.save();
-
-        } catch (error) {
-          console.error(
-            '❌ Error creating new temporary voice channel:',
-            error,
-          );
+      // Check if the user already has a temporary channel
+      const userChannelData = await VoiceChannelUser.findOne({ guildId, userId });
+      if (userChannelData) {
+        const existingChannel = newState.guild.channels.cache.get(userChannelData.channelId);
+        if (existingChannel) {
+          await newState.setChannel(existingChannel);
+          return;
         }
       }
 
-      // Remove AFK status if the user joins a voice channel
-      try {
-        const afkStatus = await AFK.findOne({ userId: newState.member.id });
-        if (afkStatus) {
-          await AFK.findOneAndDelete({ userId: newState.member.id });
-          newState.member.send(
-            'Welcome back! Your AFK status has been removed because you joined a voice channel.',
-          );
-        }
-      } catch (error) {
-        console.error('Error removing AFK status on voiceStateUpdate:', error);
-      }
+      // Create a new temporary voice channel
+      const tempChannelName = voiceChannelCreateData.name.replace('{username}', newState.member.user.username);
+      const newVoiceChannel = await newState.guild.channels.create({
+        name: tempChannelName,
+        type: ChannelType.GuildVoice,
+        parent: voiceChannelCreateData.categoryId,
+        userLimit: voiceChannelCreateData.limit || 0,
+        permissionOverwrites: [
+          {
+            id: newState.guild.id,
+            deny: ['ViewChannel'],
+          },
+          {
+            id: newState.member.id,
+            allow: ['ViewChannel', 'ManageChannels'],
+          },
+        ],
+      });
+
+      // Move the user to the new temporary voice channel
+      await newState.member.voice.setChannel(newVoiceChannel);
+
+      // Store the temporary channel in the database
+      const newUserChannelData = new VoiceChannelUser({
+        guildId,
+        channelId: newVoiceChannel.id,
+        userId,
+      });
+      await newUserChannelData.save();
     }
 
     // Check if a user left a voice channel
     if (oldState.channel && !newState.channel) {
       const { channel } = oldState;
 
-      // Get VoiceMaster configuration from the database
-      const voiceMasterData = await VoiceMaster.findOne({
-        guildId: oldState.guild.id,
-      });
-      if (!voiceMasterData) return;
+      // Fetch the user's temporary channel data
+      const userChannelData = await VoiceChannelUser.findOne({ guildId, channelId: channel.id, userId: oldState.member.id });
+      if (!userChannelData) return;
 
       // Immediate deletion if no one is in the channel
-      if (channel.parentId === voiceMasterData.categoryId && channel.members.size === 0) {
+      if (channel.members.size === 0) {
         try {
           await channel.delete();
+          await VoiceChannelUser.deleteOne({ guildId, channelId: channel.id });
         } catch (error) {
           console.error('❌ Error deleting empty temporary voice channel:', error);
         }
-      }
-
-      // Reassign ownership if the owner leaves
-      if (oldState.member.id === voiceMasterData.ownerId) {
-        setTimeout(async () => {
-          if (channel.members.size > 0) {
-            const newOwner = channel.members.first();
-            voiceMasterData.ownerId = newOwner.id;
-            await voiceMasterData.save();
-            newOwner.send('You are now the owner of the temporary voice channel.');
-          }
-        }, 300000); // 5 minutes in milliseconds
       }
     }
   },

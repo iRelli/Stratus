@@ -1,126 +1,89 @@
-const {
-  SlashCommandBuilder,
-  ChannelType,
-  PermissionsBitField,
-} = require('discord.js');
-const VoiceMaster = require('../../models/VoiceMaster');
+const { SlashCommandBuilder } = require('discord.js');
+const VoiceChannelCreate = require('../models/VoiceChannelCreate');
 
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName('voicemaster')
+    .setName('vc')
     .setDescription('Manages temporary voice channels.')
-    .addSubcommand((subcommand) =>
+    .addSubcommand(subcommand =>
       subcommand
         .setName('setup')
-        .setDescription('Sets up the VoiceMaster category and channel.'),
-    )
-    .addSubcommand((subcommand) =>
+        .setDescription('Sets up the configuration for voice channel creation.')
+        .addStringOption(option =>
+          option.setName('channelname')
+            .setDescription('The name of the "Join to Create" channel.')
+            .setRequired(true))
+        .addStringOption(option =>
+          option.setName('categoryname')
+            .setDescription('The name of the category where the temporary channels will be created.')
+            .setRequired(true))
+        .addStringOption(option =>
+          option.setName('name')
+            .setDescription('The name template for the temporary channels. Use {username} to include the user\'s name.')
+            .setRequired(true))
+        .addIntegerOption(option =>
+          option.setName('limit')
+            .setDescription('The user limit for the temporary channels. Set to 0 for unlimited.')
+            .setRequired(false)))
+    .addSubcommand(subcommand =>
       subcommand
-        .setName('reset')
-        .setDescription('Resets the VoiceMaster configuration for the server.'),
-    ),
-
+        .setName('disable')
+        .setDescription('Disables the voice channel creation.'))
+    .addSubcommand(subcommand =>
+      subcommand
+        .setName('rename')
+        .setDescription('Renames the configuration for voice channel creation.')
+        .addStringOption(option =>
+          option.setName('name')
+            .setDescription('The new name template for the temporary channels. Use {username} to include the user\'s name.')
+            .setRequired(true))),
   async execute(interaction) {
+    const guildId = interaction.guild.id;
     const subcommand = interaction.options.getSubcommand();
 
     if (subcommand === 'setup') {
-      if (
-        !interaction.member.permissions.has(
-          PermissionsBitField.Flags.Administrator,
-        )
-      ) {
-        return interaction.reply({
-          content: '❌ You do not have permission to use this command.',
-          ephemeral: true,
-        });
-      }
+      const channelName = interaction.options.getString('channelname');
+      const categoryName = interaction.options.getString('categoryname');
+      const name = interaction.options.getString('name');
+      const limit = interaction.options.getInteger('limit') || 0;
 
-      try {
-        const guildId = interaction.guild.id;
-        const ownerId = interaction.user.id; 
+      // Create the category
+      const category = await interaction.guild.channels.create({
+        name: categoryName,
+        type: ChannelType.GuildCategory,
+      });
 
-        let voiceMasterData = await VoiceMaster.findOne({ guildId });
-        if (voiceMasterData) {
-          return interaction.reply({
-            content: '❌ VoiceMaster is already set up for this server.',
-            ephemeral: true,
-          });
-        }
+      // Create the "Join to Create" channel
+      const channel = await interaction.guild.channels.create({
+        name: channelName,
+        type: ChannelType.GuildVoice,
+        parent: category.id,
+      });
 
-        const category = await interaction.guild.channels.create({
-          name: 'Temporary Channels',
-          type: ChannelType.GuildCategory,
-        });
+      // Save the configuration to the database
+      const voiceChannelCreateData = new VoiceChannelCreate({
+        guildId,
+        channelId: channel.id,
+        name,
+        limit,
+        categoryId: category.id,
+      });
 
-        const voiceChannel = await interaction.guild.channels.create({
-          name: 'Join to Create',
-          type: ChannelType.GuildVoice,
-          parent: category.id,
-        });
+      await voiceChannelCreateData.save();
 
-        voiceMasterData = new VoiceMaster({
-          guildId,
-          categoryId: category.id,
-          channelId: voiceChannel.id,
-          ownerId, 
-        });
-        await voiceMasterData.save();
+      await interaction.reply(`Voice channel creation setup complete. Temporary channels will be created under category "${categoryName}" with the name template "${name}" and user limit ${limit}.`);
 
-        return interaction.reply({
-          content: `✅ VoiceMaster setup complete. Temporary voice channels will be created under **${category.name}**.`,
-          ephemeral: true,
-        });
-      } catch (error) {
-        console.error('❌ Error setting up VoiceMaster:', error);
-        return interaction.reply({
-          content:
-            '❌ An error occurred while setting up VoiceMaster. Try again later.',
-          ephemeral: true,
-        });
-      }
-    } else if (subcommand === 'reset') {
-      if (
-        !interaction.member.permissions.has(
-          PermissionsBitField.Flags.Administrator,
-        )
-      ) {
-        return interaction.reply({
-          content: '❌ You do not have permission to use this command.',
-          ephemeral: true,
-        });
-      }
+    } else if (subcommand === 'disable') {
+      // Remove the configuration from the database
+      await VoiceChannelCreate.deleteOne({ guildId });
+      await interaction.reply(`Voice channel creation has been disabled.`);
 
-      try {
-        const guildId = interaction.guild.id;
+    } else if (subcommand === 'rename') {
+      const name = interaction.options.getString('name');
 
-        let voiceMasterData = await VoiceMaster.findOne({ guildId });
-        if (!voiceMasterData) {
-          return interaction.reply({
-            content: '❌ VoiceMaster is not set up for this server.',
-            ephemeral: true,
-          });
-        }
-
-        const category = await interaction.guild.channels.cache.get(voiceMasterData.categoryId);
-        const voiceChannel = await interaction.guild.channels.cache.get(voiceMasterData.channelId);
-
-        if (category) await category.delete();
-        if (voiceChannel) await voiceChannel.delete();
-
-        await VoiceMaster.deleteOne({ guildId });
-
-        return interaction.reply({
-          content: '✅ VoiceMaster configuration has been reset for this server.',
-          ephemeral: true,
-        });
-      } catch (error) {
-        console.error('❌ Error resetting VoiceMaster:', error);
-        return interaction.reply({
-          content:
-            '❌ An error occurred while resetting VoiceMaster. Try again later.',
-          ephemeral: true,
-        });
-      }
+      // Update the name configuration in the database
+      await VoiceChannelCreate.findOneAndUpdate({ guildId }, { name });
+      await interaction.reply(`Voice channel creation name template has been updated to "${name}".`);
     }
   },
 };

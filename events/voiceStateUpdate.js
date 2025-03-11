@@ -16,6 +16,16 @@ module.exports = {
       // Check if the joined channel is the setup channel
       if (channel.id === voiceMasterData.channelId) {
         try {
+          // Wait for a short period to ensure the user is fully connected
+          await new Promise(resolve => setTimeout(resolve, 1000));
+
+          // Verify the user is still connected to the "Join to Create" channel
+          const member = await channel.guild.members.fetch(newState.id);
+          if (member.voice.channelId !== channel.id) {
+            console.log('User is no longer connected to the "Join to Create" channel.');
+            return;
+          }
+
           // Create a new temporary voice channel
           const newVoiceChannel = await channel.guild.channels.create({
             name: `Temp ${newState.member.displayName}`,
@@ -23,18 +33,12 @@ module.exports = {
             parent: voiceMasterData.categoryId,
           });
 
-          // Check if the user is still connected to the original voice channel
-          if (newState.channel) {
-            // Move the user to the new temporary voice channel
-            await newState.member.voice.setChannel(newVoiceChannel);
+          // Move the user to the new temporary voice channel
+          await newState.member.voice.setChannel(newVoiceChannel);
 
-            // Update users in VoiceMaster data
-            voiceMasterData.users.push(newState.member.id);
-            await voiceMasterData.save();
-          } else {
-            // Delete the temporary voice channel if the user is no longer connected
-            await newVoiceChannel.delete();
-          }
+          // Update users in VoiceMaster data
+          voiceMasterData.users.push(newState.member.id);
+          await voiceMasterData.save();
 
         } catch (error) {
           console.error(

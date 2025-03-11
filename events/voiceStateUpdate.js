@@ -21,7 +21,7 @@ module.exports = {
 
           // Verify the user is still connected to the "Join to Create" channel
           const member = await channel.guild.members.fetch(newState.id);
-          if (member.voice.channelId !== channel.id) {
+          if (!member.voice.channel || member.voice.channel.id !== channel.id) {
             console.log('User is no longer connected to the "Join to Create" channel.');
             return;
           }
@@ -31,6 +31,16 @@ module.exports = {
             name: `Temp ${newState.member.displayName}`,
             type: ChannelType.GuildVoice,
             parent: voiceMasterData.categoryId,
+            permissionOverwrites: [
+              {
+                id: newState.guild.id,
+                deny: ['ViewChannel'],
+              },
+              {
+                id: newState.member.id,
+                allow: ['ViewChannel', 'ManageChannels'],
+              },
+            ],
           });
 
           // Move the user to the new temporary voice channel
@@ -82,7 +92,7 @@ module.exports = {
       }
 
       // Reassign ownership if the owner leaves
-      if (channel.id === voiceMasterData.channelId && oldState.member.id === voiceMasterData.ownerId) {
+      if (oldState.member.id === voiceMasterData.ownerId) {
         setTimeout(async () => {
           if (channel.members.size > 0) {
             const newOwner = channel.members.first();

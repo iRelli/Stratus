@@ -6,4 +6,4 @@ const VoiceChannelUserSchema = new mongoose.Schema({
   userId: { type: String, required: true },
 });
 
-module.exports = mongoose.model('VoiceChannelUser', VoiceChannelUserSchema);s
+module.exports = mongoose.model('VoiceChannelUser', VoiceChannelUserSchema);

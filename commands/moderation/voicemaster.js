@@ -1,5 +1,6 @@
 const { SlashCommandBuilder, ChannelType } = require('discord.js');
 const VoiceChannelCreate = require('../../models/VoiceChannelCreate');
+const VoiceChannelUser = require('../../models/VoiceChannelUser')
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -61,52 +62,50 @@ module.exports = {
   async execute(interaction) {
     const guildId = interaction.guild.id;
     const subcommand = interaction.options.getSubcommand();
-
+    const serverData = await VoiceChannelCreate.findOne({guildId: interaction.guild.id})
     if (subcommand === 'setup') {
       const channelName = interaction.options.getString('channelname');
       const categoryName = interaction.options.getString('categoryname');
       const name = interaction.options.getString('name');
       const limit = interaction.options.getInteger('limit') || 0;
 
-      // Create the category
-      const category = await interaction.guild.channels.create({
-        name: categoryName,
-        type: ChannelType.GuildCategory,
+      await VoiceChannelCreate.create({
+        guildId: interaction.guild.id,
+        channelId: channelName.id, 
+        categoryId: categoryName.parentId,
+        nameS: name,
+        limit: limit
       });
-
-      // Create the "Join to Create" channel
-      const channel = await interaction.guild.channels.create({
-        name: channelName,
-        type: ChannelType.GuildVoice,
-        parent: category.id,
-      });
-
-      // Save the configuration to the database
-      const voiceChannelCreateData = new VoiceChannelCreate({
-        guildId,
-        channelId: channel.id,
-        name,
-        limit,
-        categoryId: category.id,
-      });
-
-      await voiceChannelCreateData.save();
-
       await interaction.reply(
-        `Voice channel creation setup complete. Temporary channels will be created under category "${categoryName}" with the name template "${name}" and user limit ${limit}.`,
+        `I have setup join to create mane lets fucking goo!!.`,
       );
+
+
+
+
     } else if (subcommand === 'disable') {
-      // Remove the configuration from the database
+      if(!serverData)
+        return interaction.reply("The System is not setup.");
       await VoiceChannelCreate.deleteOne({ guildId });
       await interaction.reply(`Voice channel creation has been disabled.`);
     } else if (subcommand === 'rename') {
-      const name = interaction.options.getString('name');
+      const userData = await VoiceChannelUser.findOne({guildId: interaction.guild.id})
+      if(!userData) return interaction.reply('you do not own a voice channel')
+        else{
+      const rename = options.getString('name');
+      const vc = await interaction.guild.channel.fetch(userData.channelId)
+      if(!vc) return interaction.reply('you do not own that voice channel.')
 
-      // Update the name configuration in the database
-      await VoiceChannelCreate.findOneAndUpdate({ guildId }, { name });
-      await interaction.reply(
-        `Voice channel creation name template has been updated to "${name}".`,
-      );
+        try {
+          await vc.setName(rename);
+          await interation.reply('renamed thank you')
+        } catch {
+          interaction.reply("error")
+        }
+          
+      }
+    
+      
     }
   },
 };

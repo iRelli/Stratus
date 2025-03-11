@@ -7,7 +7,7 @@ const {
 } = require('discord.js');
 const loadCommands = require('./handlers/commandHandler');
 const loadEvents = require('./handlers/eventHandler');
-const { deployCommands } = require('./deployCommands');
+const { deployCommands } = require('./deploy-commands');
 
 const client = new Client({
   intents: [

@@ -6,6 +6,8 @@ module.exports = {
   name: 'voiceStateUpdate',
   async execute(oldState, newState) {
     if (!oldState.channel && newState.channel) {
+      console.log(`${newState.member.user.tag} joined voice channel ${newState.channel.name} (${newState.channel.id})`);
+
       const serverData = await VoiceChannelCreate.findOne({ guildId: newState.guild.id });
       if (!serverData || newState.channel.id !== serverData.channelId) return;
 

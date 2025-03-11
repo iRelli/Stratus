@@ -23,12 +23,18 @@ module.exports = {
             parent: voiceMasterData.categoryId,
           });
 
-          // Move the user to the new temporary voice channel
-          await newState.member.voice.setChannel(newVoiceChannel);
+          // Check if the user is still connected to the original voice channel
+          if (newState.channel) {
+            // Move the user to the new temporary voice channel
+            await newState.member.voice.setChannel(newVoiceChannel);
 
-          // Update users in VoiceMaster data
-          voiceMasterData.users.push(newState.member.id);
-          await voiceMasterData.save();
+            // Update users in VoiceMaster data
+            voiceMasterData.users.push(newState.member.id);
+            await voiceMasterData.save();
+          } else {
+            // Delete the temporary voice channel if the user is no longer connected
+            await newVoiceChannel.delete();
+          }
 
         } catch (error) {
           console.error(

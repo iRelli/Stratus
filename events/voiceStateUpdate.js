@@ -9,7 +9,7 @@ module.exports = {
       const serverData = await VoiceChannelCreate.findOne({ guildId: newState.guild.id})
       if(!serverData || newState.channel.id !== serverData.channel) return;
 
-      const channel = await newState.guild.create({
+      const channel = await newState.guild.channels.create({
         name: serverData.name,
         type: ChannelType.GuildVoice,
         parent: serverData.categoryId,
@@ -30,7 +30,7 @@ module.exports = {
       if(!userData) return;
 
       const channel = await oldState.guild.channel.resolve(oldState.channel.id)
-      if(channel && channel.member.size == 0){
+      if(channel && channel.member.size === 0){
         await VoiceChannelUser.deleteOne({channelId: oldState.channel.id})
         await channel.delete().catch(err => {});
       }

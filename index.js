@@ -23,6 +23,7 @@ const client = new Client({
   ],
   partials: [Partials.User, Partials.GuildMember, Partials.Channel],
 });
+deployCommands();
 
 client.cache = {
   servers: new Collection(),
@@ -32,7 +33,6 @@ client.cache = {
 
 loadCommands(client);
 loadEvents(client);
-loadCommands();
 
 global.client = client;
 

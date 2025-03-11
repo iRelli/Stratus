@@ -10,17 +10,9 @@ const loadEvents = require('./handlers/eventHandler');
 const { deployCommands } = require('./deploy-commands');
 
 const client = new Client({
-  intents: [
-    GatewayIntentBits.Guilds,
-    GatewayIntentBits.GuildMembers,
-    GatewayIntentBits.GuildPresences,
-    GatewayIntentBits.GuildMessages,
-    GatewayIntentBits.GuildVoiceStates,
-    GatewayIntentBits.MessageContent,
-    GatewayIntentBits.GuildModeration,
-    GatewayIntentBits.GuildMessageReactions,
-  ],
-  partials: [Partials.User, Partials.GuildMember, Partials.Channel],
+  intents: Object.keys(GatewayIntentBits).map((a)=>{
+    return GatewayIntentBits[a]
+  }),
 });
 
 // Deploy commands and start the bot

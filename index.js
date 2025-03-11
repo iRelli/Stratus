@@ -18,17 +18,17 @@ client.cache = {
   servers: new Collection(),
   moderators: new Collection(),
   cacheTimestamps: new Collection(),
-  djEnabled: new Collection(), 
+  djEnabled: new Collection(),
 };
-
-(async () => {
-  await deployCommands();
-  client.login(process.env.TOKEN);
-})();
 
 client.on('interactionCreate', interaction => interactionCreateHandler(client, interaction));
 
 loadCommands(client);
 loadEvents(client);
+
+(async () => {
+  await deployCommands();
+  client.login(process.env.TOKEN);
+})();
 
 global.client = client;

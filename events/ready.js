@@ -3,7 +3,6 @@ const Levels = require('discord-xp');
 const Moderation = require('../models/Moderation');
 const WebSocket = require('ws');
 require('dotenv').config();
-const lavalinkManager = require('../utils/LavaLink');
 
 module.exports = {
   name: 'ready',
@@ -32,8 +31,6 @@ module.exports = {
     });
   },
 };
-
-lavalinkManager(client); 
 
 async function ensureGuildConfig(guildId) {
   try {

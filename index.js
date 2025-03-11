@@ -8,7 +8,6 @@ const {
 const loadCommands = require('./handlers/commandHandler');
 const loadEvents = require('./handlers/eventHandler');
 const { deployCommands } = require('./deploy-commands');
-const interactionCreateHandler = require('./utils/interactionCreateHandler');
 
 const client = new Client({
   intents: Object.keys(GatewayIntentBits).map((a) => GatewayIntentBits[a]),
@@ -20,8 +19,6 @@ client.cache = {
   cacheTimestamps: new Collection(),
   djEnabled: new Collection(),
 };
-
-client.on('interactionCreate', interaction => interactionCreateHandler(client, interaction));
 
 loadCommands(client);
 loadEvents(client);

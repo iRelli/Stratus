@@ -65,7 +65,8 @@ module.exports = {
     const serverData = await VoiceChannelCreate.findOne({ guildId });
 
     if (subcommand === 'setup') {
-      if(serverData) return interaction.reply('there is alreadya  database existing.')
+      if (serverData)
+        return interaction.reply('there is alreadya  database existing.');
       const channelName = interaction.options.getString('channelname');
       const categoryName = interaction.options.getString('categoryname');
       const name = interaction.options.getString('name');
@@ -93,16 +94,17 @@ module.exports = {
         limit: limit,
       });
 
-      await interaction.reply(`Voice channel creation setup complete. Temporary channels will be created under category "${categoryName}" with the name template "${name}" and user limit ${limit}.`);
-
+      await interaction.reply(
+        `Voice channel creation setup complete. Temporary channels will be created under category "${categoryName}" with the name template "${name}" and user limit ${limit}.`,
+      );
     } else if (subcommand === 'disable') {
-      if (!serverData)
-        return interaction.reply("The System is not setup.");
+      if (!serverData) return interaction.reply('The System is not setup.');
       await VoiceChannelCreate.deleteOne({ guildId });
       await interaction.reply(`Voice channel creation has been disabled.`);
     } else if (subcommand === 'rename') {
       const userData = await VoiceChannelUser.findOne({ guildId });
-      if (!userData) return interaction.reply('You do not own a voice channel.');
+      if (!userData)
+        return interaction.reply('You do not own a voice channel.');
 
       const rename = interaction.options.getString('name');
       const vc = await interaction.guild.channels.fetch(userData.channelId);

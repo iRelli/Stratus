@@ -5,12 +5,18 @@ const { ChannelType } = require('discord.js');
 module.exports = {
   name: 'voiceStateUpdate',
   async execute(oldState, newState) {
+    // Only log when a user joins a channel
+    if (newState.channel) {
+      console.log(
+        `${newState.member.user.tag} joined voice channel ${newState.channel.name} (${newState.channel.id})`,
+      );
+    }
 
-    if (!oldState.channel && newState.channel) {
-
-      console.log(`${newState.member.user.tag} joined voice channel ${newState.channel.name} (${newState.channel.id})`);
-
-      const serverData = await VoiceChannelCreate.findOne({ guildId: newState.guild.id });
+    // Check if user joins a channel (regardless of whether they were in another channel before)
+    if (newState.channel) {
+      const serverData = await VoiceChannelCreate.findOne({
+        guildId: newState.guild.id,
+      });
       if (!serverData || newState.channel.id !== serverData.channelId) return;
 
       const channel = await newState.guild.channels.create({
@@ -26,19 +32,23 @@ module.exports = {
         channelId: channel.id,
       });
 
-      await newState.member.voice.setChannel(channel).catch(err => {
+      await newState.member.voice.setChannel(channel).catch((err) => {
         console.error('Error moving user to the new channel:', err);
       });
     }
 
     if (oldState.channel && !newState.channel) {
-      const userData = await VoiceChannelUser.findOne({ channelId: oldState.channel.id });
+      const userData = await VoiceChannelUser.findOne({
+        channelId: oldState.channel.id,
+      });
       if (!userData) return;
 
-      const channel = await oldState.guild.channels.resolve(oldState.channel.id);
+      const channel = await oldState.guild.channels.resolve(
+        oldState.channel.id,
+      );
       if (channel && channel.members.size === 0) {
         await VoiceChannelUser.deleteOne({ channelId: oldState.channel.id });
-        await channel.delete().catch(err => {
+        await channel.delete().catch((err) => {
           console.error('Error deleting the empty channel:', err);
         });
       }

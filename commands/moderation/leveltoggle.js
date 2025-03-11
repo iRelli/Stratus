@@ -31,7 +31,7 @@ module.exports = {
         flags: 64,
       });
     } catch (error) {
-      console.error('Error toggling leveling system:', error);
+      console.error('Error togglingg leveling system:', error);
       return interaction.reply({
         content: '❌ An error occurred while updating the leveling system.',
         flags: 64,

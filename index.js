@@ -8,7 +8,6 @@ const {
 const loadCommands = require('./handlers/commandHandler');
 const loadEvents = require('./handlers/eventHandler');
 const { deployCommands } = require('./deploy-commands');
-const lavalinkManager = require('./utils/LavaLink');
 const interactionCreateHandler = require('./utils/interactionCreateHandler');
 
 const client = new Client({
@@ -26,11 +25,6 @@ client.cache = {
   await deployCommands();
   client.login(process.env.TOKEN);
 })();
-
-client.once('ready', () => {
-  console.log(`Logged in as ${client.user.tag}`);
-  lavalinkManager(client); 
-});
 
 client.on('interactionCreate', interaction => interactionCreateHandler(client, interaction));
 

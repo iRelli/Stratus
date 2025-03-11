@@ -65,6 +65,7 @@ module.exports = {
     const serverData = await VoiceChannelCreate.findOne({ guildId });
 
     if (subcommand === 'setup') {
+      if(serverData) return interaction.reply('there is alreadya  database existing.')
       const channelName = interaction.options.getString('channelname');
       const categoryName = interaction.options.getString('categoryname');
       const name = interaction.options.getString('name');

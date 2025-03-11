@@ -7,8 +7,7 @@ const {
 } = require('discord.js');
 const loadCommands = require('./handlers/commandHandler');
 const loadEvents = require('./handlers/eventHandler');
-const deployCommands = require('./deploy-commands');
-
+const { deployCommands } = require('./deployCommands');
 
 const client = new Client({
   intents: [
@@ -23,7 +22,12 @@ const client = new Client({
   ],
   partials: [Partials.User, Partials.GuildMember, Partials.Channel],
 });
-deployCommands();
+
+// Deploy commands and start the bot
+(async () => {
+  await deployCommands();
+  client.login(process.env.TOKEN);
+})();
 
 client.cache = {
   servers: new Collection(),
@@ -35,5 +39,3 @@ loadCommands(client);
 loadEvents(client);
 
 global.client = client;
-
-client.login(process.env.TOKEN);

@@ -15,10 +15,12 @@ module.exports = {
 
       await Moderation.deleteMany({ guildId });
 
-
       console.log(`Deleted all database entries for guild: ${guildId}`);
     } catch (error) {
-      console.error(`Error deleting database entries for guild: ${guildId}`, error);
+      console.error(
+        `Error deleting database entries for guild: ${guildId}`,
+        error,
+      );
     }
   },
 };

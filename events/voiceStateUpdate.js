@@ -6,6 +6,7 @@ module.exports = {
   name: 'voiceStateUpdate',
   async execute(oldState, newState) {
     if (!oldState.channel && newState.channel) {
+      // User joins a voice channel
       const { channel } = newState;
       const guildId = newState.guild.id;
 
@@ -25,12 +26,10 @@ module.exports = {
           // Move the user to the new temporary voice channel
           await newState.member.voice.setChannel(newVoiceChannel);
 
-          // Set a timeout to delete the temporary voice channel after 5 minutes of inactivity
-          newVoiceChannel.timeout = setTimeout(async () => {
-            if (newVoiceChannel.members.size === 0) {
-              await newVoiceChannel.delete();
-            }
-          }, 300000); // 5 minutes in milliseconds
+          // Update users in VoiceMaster data
+          voiceMasterData.users.push(newState.member.id);
+          await voiceMasterData.save();
+
         } catch (error) {
           console.error(
             '❌ Error creating new temporary voice channel:',
@@ -63,21 +62,23 @@ module.exports = {
       });
       if (!voiceMasterData) return;
 
-      // Check if the channel is a temporary voice channel and is now empty
-      if (
-        channel.parentId === voiceMasterData.categoryId &&
-        channel.members.size === 0
-      ) {
-        // Clear the timeout to delete the channel if it was set
-        if (channel.timeout) {
-          clearTimeout(channel.timeout);
-          channel.timeout = null;
+      // Immediate deletion if no one is in the channel
+      if (channel.parentId === voiceMasterData.categoryId && channel.members.size === 0) {
+        try {
+          await channel.delete();
+        } catch (error) {
+          console.error('❌ Error deleting empty temporary voice channel:', error);
         }
+      }
 
-        // Set a timeout to delete the temporary voice channel after 5 minutes of inactivity
-        channel.timeout = setTimeout(async () => {
-          if (channel.members.size === 0) {
-            await channel.delete();
+      // Reassign ownership if the owner leaves
+      if (channel.id === voiceMasterData.channelId && oldState.member.id === voiceMasterData.ownerId) {
+        setTimeout(async () => {
+          if (channel.members.size > 0) {
+            const newOwner = channel.members.first();
+            voiceMasterData.ownerId = newOwner.id;
+            await voiceMasterData.save();
+            newOwner.send('You are now the owner of the temporary voice channel.');
           }
         }, 300000); // 5 minutes in milliseconds
       }

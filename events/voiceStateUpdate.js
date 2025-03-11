@@ -5,92 +5,34 @@ const { ChannelType } = require('discord.js');
 module.exports = {
   name: 'voiceStateUpdate',
   async execute(oldState, newState) {
-    const guildId = newState.guild.id;
+    if(!oldState.channel && newState.channel){
+      const serverData = await VoiceChannelCreate.findOne({ guildId: newState.guild.id})
+      if(!serverData || newState.channel.id !== serverData.channel) return;
 
-    // Fetch the guild's configuration for voice channel creation
-    const voiceChannelCreateData = await VoiceChannelCreate.findOne({
-      guildId,
-    });
-    if (!voiceChannelCreateData || !voiceChannelCreateData.channelId) return;
+      const channel = await newState.guild.create({
+        name: serverData.name,
+        type: ChannelType.GuildVoice,
+        parent: serverData.categoryId,
+        userLimit: serverData.limit || 0
+      })
 
-    // Handle user joining a voice channel
-    if (!oldState.channel && newState.channel) {
-      if (newState.channelId === voiceChannelCreateData.channelId) {
-        const userId = newState.member.id;
+      await VoiceChannelUser.create({
+          guildId: newState.guild.id,
+          userId: newState.member.id,
+          channelId: channel.id
+      });
 
-        // Check if the user already has a temporary channel
-        const userChannelData = await VoiceChannelUser.findOne({
-          guildId,
-          userId,
-        });
-        if (userChannelData) {
-          const existingChannel = newState.guild.channels.cache.get(
-            userChannelData.channelId,
-          );
-          if (existingChannel) {
-            await newState.setChannel(existingChannel);
-            return;
-          }
-        }
-
-        // Create a new temporary voice channel
-        const tempChannelName = voiceChannelCreateData.name.replace(
-          '{username}',
-          newState.member.user.username,
-        );
-        const newVoiceChannel = await newState.guild.channels.create({
-          name: tempChannelName,
-          type: ChannelType.GuildVoice,
-          parent: voiceChannelCreateData.categoryId,
-          userLimit: voiceChannelCreateData.limit || 0,
-          permissionOverwrites: [
-            {
-              id: newState.guild.id,
-              deny: ['ViewChannel'],
-            },
-            {
-              id: newState.member.id,
-              allow: ['ViewChannel', 'ManageChannels'],
-            },
-          ],
-        });
-
-        // Move the user to the new temporary voice channel
-        await newState.member.voice.setChannel(newVoiceChannel);
-
-        // Store the temporary channel in the database
-        const newUserChannelData = new VoiceChannelUser({
-          guildId,
-          channelId: newVoiceChannel.id,
-          userId,
-        });
-        await newUserChannelData.save();
-      }
+      await newState.member.voice.setChannel(channel).catch(err =>{});
     }
 
-    // Handle user leaving a voice channel
-    if (oldState.channel && !newState.channel) {
-      const { channel } = oldState;
+    if(oldState.channel && !newState.channel){
+      const userData = await VoiceChannelUser.findOne({channelId: oldState.channel.id});
+      if(!userData) return;
 
-      // Fetch the user's temporary channel data
-      const userChannelData = await VoiceChannelUser.findOne({
-        guildId,
-        channelId: channel.id,
-        userId: oldState.member.id,
-      });
-      if (!userChannelData) return;
-
-      // Immediate deletion if no one is in the channel
-      if (channel.members.size === 0) {
-        try {
-          await channel.delete();
-          await VoiceChannelUser.deleteOne({ guildId, channelId: channel.id });
-        } catch (error) {
-          console.error(
-            '❌ Error deleting empty temporary voice channel:',
-            error,
-          );
-        }
+      const channel = await oldState.guild.channel.resolve(oldState.channel.id)
+      if(channel && channel.member.size == 0){
+        await VoiceChannelUser.deleteOne({channelId: oldState.channel.id})
+        await channel.delete().catch(err => {});
       }
     }
   },

@@ -5,8 +5,9 @@ const { ChannelType } = require('discord.js');
 module.exports = {
   name: 'voiceStateUpdate',
   async execute(oldState, newState) {
+    console.log(`${newState.member.user.tag} joined voice channel ${newState.channel.name} (${newState.channel.id})`);
+
     if (!oldState.channel && newState.channel) {
-      console.log(`${newState.member.user.tag} joined voice channel ${newState.channel.name} (${newState.channel.id})`);
 
       const serverData = await VoiceChannelCreate.findOne({ guildId: newState.guild.id });
       if (!serverData || newState.channel.id !== serverData.channelId) return;

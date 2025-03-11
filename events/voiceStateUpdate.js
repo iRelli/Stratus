@@ -9,9 +9,8 @@ module.exports = {
       const serverData = await VoiceChannelCreate.findOne({ guildId: newState.guild.id });
       if (!serverData || newState.channel.id !== serverData.channelId) return;
 
-      const tempChannelName = serverData.name.replace('{username}', newState.member.user.username);
       const channel = await newState.guild.channels.create({
-        name: tempChannelName,
+        name: serverData.nameS,
         type: ChannelType.GuildVoice,
         parent: serverData.categoryId,
         userLimit: serverData.limit || 0,

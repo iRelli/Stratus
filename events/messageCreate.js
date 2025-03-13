@@ -9,7 +9,10 @@ const xpCooldowns = new Set(); // ✅ Prevents XP farming by limiting messages p
 
 module.exports = {
   name: 'messageCreate',
-  async execute(client, message) {
+  async execute(message) {
+    // ✅ FIXED: Remove `client` parameter
+    if (!message || !message.author) return; // ✅ Prevents undefined errors
+
     if (message.author.bot || !message.guild) return;
 
     const guildId = message.guild.id;
@@ -26,7 +29,7 @@ module.exports = {
     }
 
     // ✅ Check if user is a Trusted User (bypass filtering)
-    if (moderationData.trustedUsers.has(userId)) return;
+    if (moderationData.trustedUsers?.has(userId)) return;
 
     // ✅ Remove AFK status if the user sends a message
     try {

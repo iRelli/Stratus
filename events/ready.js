@@ -1,7 +1,9 @@
 const mongoose = require('mongoose');
 const Levels = require('discord-xp');
 const Moderation = require('../models/Moderation');
-const WebSocket = require('ws');
+const { cleanupEmptyVCs } = require('../utils/vmHandler'); 
+const { initializeCacheCleanup } = require('../utils/cacheHandler'); 
+
 require('dotenv').config();
 
 module.exports = {
@@ -20,6 +22,10 @@ module.exports = {
     for (const guild of client.guilds.cache.values()) {
       await ensureGuildConfig(guild.id);
     }
+    
+    initializeCacheCleanup(client);
+    await cleanupEmptyVCs(client);
+
     client.user.setPresence({
       status: 'dnd',
       activities: [
@@ -45,10 +51,6 @@ async function ensureGuildConfig(guildId) {
         antiRaidThreshold: 5,
         antiRaidAction: 'kick',
         antiRaidTimeframe: 10,
-        rateLimitEnabled: false,
-        rateLimitThreshold: 5,
-        rateLimitTimeframe: 5,
-        rateLimitDuration: 10,
         messageFilterEnabled: false,
         filterLevel: 'normal',
         levelingEnabled: false,
@@ -56,14 +58,9 @@ async function ensureGuildConfig(guildId) {
       });
 
       await moderationData.save();
-      console.log(
-        `✅ Created default moderation settings for guild: ${guildId}`,
-      );
+      console.log(`✅ Created default moderation settings for guild: ${guildId}`);
     }
   } catch (error) {
-    console.error(
-      `❌ Error ensuring moderation settings for ${guildId}:`,
-      error,
-    );
+    console.error(`❌ Error ensuring moderation settings for ${guildId}:`, error);
   }
 }

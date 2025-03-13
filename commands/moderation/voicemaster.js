@@ -1,121 +1,161 @@
-const { SlashCommandBuilder, ChannelType } = require('discord.js');
+const {
+  SlashCommandBuilder,
+  PermissionFlagsBits,
+  ChannelType,
+  EmbedBuilder,
+} = require('discord.js');
 const VoiceChannelCreate = require('../../models/VoiceChannelCreate');
-const VoiceChannelUser = require('../../models/VoiceChannelUser');
 
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName('vc')
-    .setDescription('Manages temporary voice channels.')
+    .setName('voicemaster')
+    .setDescription('Manage the Join to Create system.')
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
     .addSubcommand((subcommand) =>
       subcommand
         .setName('setup')
-        .setDescription('Sets up the configuration for voice channel creation.')
-        .addStringOption((option) =>
-          option
-            .setName('channelname')
-            .setDescription('The name of the "Join to Create" channel.')
-            .setRequired(true),
-        )
-        .addStringOption((option) =>
-          option
-            .setName('categoryname')
-            .setDescription(
-              'The name of the category where the temporary channels will be created.',
-            )
-            .setRequired(true),
-        )
-        .addStringOption((option) =>
-          option
-            .setName('name')
-            .setDescription(
-              "The name template for the temporary channels. Use {username} to include the user's name.",
-            )
-            .setRequired(true),
-        )
-        .addIntegerOption((option) =>
-          option
-            .setName('limit')
-            .setDescription(
-              'The user limit for the temporary channels. Set to 0 for unlimited.',
-            )
-            .setRequired(false),
+        .setDescription(
+          'Creates the Join to Create category and voice channel.',
         ),
     )
     .addSubcommand((subcommand) =>
       subcommand
-        .setName('disable')
-        .setDescription('Disables the voice channel creation.'),
+        .setName('reset')
+        .setDescription(
+          'Deletes the Join to Create system (voice channel, category, and database).',
+        ),
     )
     .addSubcommand((subcommand) =>
       subcommand
-        .setName('rename')
-        .setDescription('Renames the configuration for voice channel creation.')
-        .addStringOption((option) =>
-          option
-            .setName('name')
-            .setDescription(
-              "The new name template for the temporary channels. Use {username} to include the user's name.",
-            )
-            .setRequired(true),
-        ),
+        .setName('info')
+        .setDescription('Shows the current Join to Create configuration.'),
     ),
+
   async execute(interaction) {
-    const guildId = interaction.guild.id;
+    const guild = interaction.guild;
     const subcommand = interaction.options.getSubcommand();
-    const serverData = await VoiceChannelCreate.findOne({ guildId });
 
     if (subcommand === 'setup') {
-      if (serverData)
-        return interaction.reply('there is alreadya  database existing.');
-      const channelName = interaction.options.getString('channelname');
-      const categoryName = interaction.options.getString('categoryname');
-      const name = interaction.options.getString('name');
-      const limit = interaction.options.getInteger('limit') || 0;
-
-      // Create the category
-      const category = await interaction.guild.channels.create({
-        name: categoryName,
-        type: ChannelType.GuildCategory,
-      });
-
-      // Create the "Join to Create" channel
-      const channel = await interaction.guild.channels.create({
-        name: channelName,
-        type: ChannelType.GuildVoice,
-        parent: category.id,
-      });
-
-      // Save the configuration to the database
-      await VoiceChannelCreate.create({
-        guildId: interaction.guild.id,
-        channelId: channel.id,
-        categoryId: category.id,
-        nameS: name,
-        limit: limit,
-      });
-
-      await interaction.reply(
-        `Voice channel creation setup complete. Temporary channels will be created under category "${categoryName}" with the name template "${name}" and user limit ${limit}.`,
-      );
-    } else if (subcommand === 'disable') {
-      if (!serverData) return interaction.reply('The System is not setup.');
-      await VoiceChannelCreate.deleteOne({ guildId });
-      await interaction.reply(`Voice channel creation has been disabled.`);
-    } else if (subcommand === 'rename') {
-      const userData = await VoiceChannelUser.findOne({ guildId });
-      if (!userData)
-        return interaction.reply('You do not own a voice channel.');
-
-      const rename = interaction.options.getString('name');
-      const vc = await interaction.guild.channels.fetch(userData.channelId);
-      if (!vc) return interaction.reply('You do not own that voice channel.');
-
       try {
-        await vc.setName(rename);
-        await interaction.reply('Channel renamed successfully.');
-      } catch (error) {
-        console.error('Error renaming channel:', error);
-        await interaction.reply('Error renaming the channel.');
+        const category = await guild.channels.create({
+          name: 'Join to Create',
+          type: ChannelType.GuildCategory,
+        });
+
+        console.log(`✅ Created category: ${category.name}`);
+
+        const j2cChannel = await guild.channels.create({
+          name: 'Join to Create',
+          type: ChannelType.GuildVoice,
+          parent: category.id,
+        });
+
+        console.log(`✅ Created J2C channel: ${j2cChannel.name}`);
+
+        await VoiceChannelCreate.findOneAndUpdate(
+          { guildId: guild.id },
+          {
+            guildId: guild.id,
+            channelId: j2cChannel.id,
+            categoryId: category.id,
+            channelName: j2cChannel.name,
+          },
+          { upsert: true },
+        );
+
+        console.log(`✅ Saved to database: Guild ${guild.id}`);
+
+        await interaction.reply({
+          content: `✅ Successfully created **Join to Create** system!`,
+          ephemeral: true,
+        });
+      } catch (err) {
+        console.error('❌ Error setting up J2C:', err);
+        await interaction.reply({
+          content: '❌ Failed to create Join to Create system.',
+          ephemeral: true,
+        });
+      }
+    } else if (subcommand === 'reset') {
+      try {
+        const j2cData = await VoiceChannelCreate.findOne({ guildId: guild.id });
+
+        if (!j2cData) {
+          return interaction.reply({
+            content: '❌ No Join to Create system found for this server.',
+            ephemeral: true,
+          });
+        }
+
+        const j2cChannel = await guild.channels.cache.get(j2cData.channelId);
+        if (j2cChannel) {
+          await j2cChannel.delete();
+          console.log(`🗑️ Deleted J2C channel: ${j2cChannel.name}`);
+        }
+
+        const category = await guild.channels.cache.get(j2cData.categoryId);
+        if (category) {
+          await category.delete();
+          console.log(`🗑️ Deleted category: ${category.name}`);
+        } else {
+          console.log(`⚠️ No category found for ID: ${j2cData.categoryId}`);
+        }
+
+        await VoiceChannelCreate.deleteOne({ guildId: guild.id });
+        console.log(`🗑️ Removed J2C data from database for guild ${guild.id}`);
+
+        await interaction.reply({
+          content: '✅ Successfully removed **Join to Create** system!',
+          ephemeral: true,
+        });
+      } catch (err) {
+        console.error('❌ Error resetting J2C:', err);
+        await interaction.reply({
+          content: '❌ Failed to remove Join to Create system.',
+          ephemeral: true,
+        });
+      }
+    } else if (subcommand === 'info') {
+      try {
+        const j2cData = await VoiceChannelCreate.findOne({ guildId: guild.id });
+
+        if (!j2cData) {
+          return interaction.reply({
+            content: '❌ No Join to Create system found in the database.',
+            ephemeral: true,
+          });
+        }
+
+        const category = guild.channels.cache.get(j2cData.categoryId);
+        const j2cChannel = guild.channels.cache.get(j2cData.channelId);
+
+        const embed = new EmbedBuilder()
+          .setTitle('📊 Join to Create Configuration')
+          .setColor('Blue')
+          .addFields(
+            { name: 'Guild ID', value: j2cData.guildId, inline: true },
+            {
+              name: 'J2C Channel',
+              value: j2cChannel ? `<#${j2cChannel.id}>` : '❌ Not Found',
+              inline: true,
+            },
+            {
+              name: 'Category',
+              value: category ? category.name : '❌ Not Found',
+              inline: true,
+            },
+            { name: 'Category ID', value: j2cData.categoryId || '❌ Missing' },
+            { name: 'Channel ID', value: j2cData.channelId || '❌ Missing' },
+          )
+          .setTimestamp();
+
+        await interaction.reply({ embeds: [embed], ephemeral: true });
+      } catch (err) {
+        console.error('❌ Error fetching J2C info:', err);
+        await interaction.reply({
+          content: '❌ Failed to retrieve Join to Create information.',
+          ephemeral: true,
+        });
       }
     }
   },

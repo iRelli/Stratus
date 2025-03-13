@@ -8,11 +8,15 @@ module.exports = (client) => {
 
   for (const file of eventFiles) {
     const event = require(`../events/${file}`);
-    if (event.name && event.execute) {
-      client.on(event.name, event.execute.bind(null, client));
-      console.log(`✅ Loaded event: ${event.name}`);
+
+    if (event.once) {
+      client.once(event.name, (...args) => event.execute(...args));
     } else {
-      console.warn(`⚠️ Skipping invalid event file: ${file}`);
+      client.on(event.name, (...args) => event.execute(...args));
     }
+
+    console.log(`✅ Loaded event: ${event.name}`);
   }
+
+  console.log('🚀 All events loaded successfully!');
 };

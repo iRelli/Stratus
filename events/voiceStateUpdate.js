@@ -1,56 +1,105 @@
 const VoiceChannelCreate = require('../models/VoiceChannelCreate');
-const VoiceChannelUser = require('../models/VoiceChannelUser');
-const { ChannelType } = require('discord.js');
+const { ChannelType, PermissionsBitField, ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } = require('discord.js');
 
 module.exports = {
   name: 'voiceStateUpdate',
   async execute(oldState, newState) {
-    // Only log when a user joins a channel
-    if (newState.channel) {
-      console.log(
-        `${newState.member.user.tag} joined voice channel ${newState.channel.name} (${newState.channel.id})`,
-      );
-    }
+    if (!newState.channel && !oldState.channel) return;
 
-    // Check if user joins a channel (regardless of whether they were in another channel before)
-    if (newState.channel) {
-      const serverData = await VoiceChannelCreate.findOne({
-        guildId: newState.guild.id,
-      });
-      if (!serverData || newState.channel.id !== serverData.channelId) return;
+    const j2cData = await VoiceChannelCreate.findOne({ guildId: newState.guild.id });
+    if (!j2cData || !j2cData.categoryId) return;
 
-      const channel = await newState.guild.channels.create({
-        name: serverData.nameS,
-        type: ChannelType.GuildVoice,
-        parent: serverData.categoryId,
-        userLimit: serverData.limit || 0,
-      });
-
-      await VoiceChannelUser.create({
-        guildId: newState.guild.id,
-        userId: newState.member.id,
-        channelId: channel.id,
-      });
-
-      await newState.member.voice.setChannel(channel).catch((err) => {
-        console.error('Error moving user to the new channel:', err);
-      });
-    }
-
-    if (oldState.channel && !newState.channel) {
-      const userData = await VoiceChannelUser.findOne({
-        channelId: oldState.channel.id,
-      });
-      if (!userData) return;
-
-      const channel = await oldState.guild.channels.resolve(
-        oldState.channel.id,
-      );
-      if (channel && channel.members.size === 0) {
-        await VoiceChannelUser.deleteOne({ channelId: oldState.channel.id });
-        await channel.delete().catch((err) => {
-          console.error('Error deleting the empty channel:', err);
+    // ✅ Creating a new VC when a user joins the J2C channel
+    if (newState.channelId === j2cData.channelId) {
+      try {
+        const newChannel = await newState.guild.channels.create({
+          name: `${newState.member.displayName}'s VC`,
+          type: ChannelType.GuildVoice,
+          parent: j2cData.categoryId,
+          permissionOverwrites: [
+            {
+              id: newState.member.id,
+              allow: [
+                PermissionsBitField.Flags.ManageChannels,
+                PermissionsBitField.Flags.MuteMembers,
+                PermissionsBitField.Flags.DeafenMembers,
+                PermissionsBitField.Flags.MoveMembers,
+                PermissionsBitField.Flags.Connect,
+                PermissionsBitField.Flags.Speak,
+                PermissionsBitField.Flags.Stream,
+              ],
+            },
+          ],
         });
+
+        await VoiceChannelCreate.findOneAndUpdate(
+          { guildId: newState.guild.id, channelId: newChannel.id },
+          {
+            guildId: newState.guild.id,
+            channelId: newChannel.id,
+            ownerId: newState.member.id,
+            categoryId: j2cData.categoryId,
+            channelName: newChannel.name,
+          },
+          { upsert: true }
+        );
+
+        const embed = new EmbedBuilder()
+          .setTitle("Join VC Management")
+          .setDescription("Manage your voice channel using these buttons or `/vc` commands!")
+          .setColor("#808080")
+          .setThumbnail(newState.member.user.displayAvatarURL({ dynamic: true }));
+
+        const row1 = new ActionRowBuilder().addComponents(
+          new ButtonBuilder().setCustomId("lock").setEmoji("🔒").setStyle(ButtonStyle.Secondary),
+          new ButtonBuilder().setCustomId("unlock").setEmoji("🔓").setStyle(ButtonStyle.Secondary),
+          new ButtonBuilder().setCustomId("hide").setEmoji("🙈").setStyle(ButtonStyle.Secondary),
+          new ButtonBuilder().setCustomId("unhide").setEmoji("👁️").setStyle(ButtonStyle.Secondary)
+        );
+
+        const row2 = new ActionRowBuilder().addComponents(
+          new ButtonBuilder().setCustomId("limit").setEmoji("👥").setStyle(ButtonStyle.Secondary),
+          new ButtonBuilder().setCustomId("invite").setEmoji("➕").setStyle(ButtonStyle.Secondary),
+          new ButtonBuilder().setCustomId("ban").setEmoji("⛔").setStyle(ButtonStyle.Secondary),
+          new ButtonBuilder().setCustomId("permit").setEmoji("✅").setStyle(ButtonStyle.Secondary)
+        );
+
+        const row4 = new ActionRowBuilder().addComponents(
+          new ButtonBuilder().setCustomId("claim").setEmoji("👑").setStyle(ButtonStyle.Secondary)
+        );
+
+        if (newChannel.permissionsFor(newState.guild.roles.everyone).has(PermissionsBitField.Flags.SendMessages)) {
+          await newChannel.send({
+            content: `🎙️ <@${newState.member.id}> your voice channel **${newChannel.name}** has been created!`,
+            embeds: [embed],
+            components: [row1, row2, row4],
+          });
+        }
+
+        setTimeout(async () => {
+          if (!newState.member.voice.channel) return;
+          try {
+            await newState.member.voice.setChannel(newChannel);
+          } catch (moveError) {
+            console.error("Error moving user:", moveError);
+          }
+        }, 1000);
+      } catch (err) {
+        console.error('Error creating voice channel:', err);
+      }
+    }
+
+    if (oldState.channel && oldState.channel.id !== j2cData.channelId) {
+      const vcData = await VoiceChannelCreate.findOne({ guildId: oldState.guild.id, channelId: oldState.channel.id });
+
+      if (vcData && oldState.channel.members.size === 0) {
+        try {
+          console.log(`🗑️ Deleting empty VC: ${oldState.channel.name}`);
+          await VoiceChannelCreate.deleteOne({ channelId: oldState.channel.id });
+          await oldState.channel.delete();
+        } catch (error) {
+          console.error(`❌ Error deleting empty VC:`, error);
+        }
       }
     }
   },

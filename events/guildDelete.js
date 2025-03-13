@@ -1,7 +1,7 @@
 const VoiceChannelUser = require('../models/VoiceChannelUser');
 const VoiceChannelCreate = require('../models/VoiceChannelCreate');
 const Moderation = require('../models/Moderation');
-const AFK = require('../models/AFK');
+const AFK = require('../models/afkSchema');
 
 module.exports = {
   name: 'guildDelete',

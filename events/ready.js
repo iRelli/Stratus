@@ -1,8 +1,8 @@
 const mongoose = require('mongoose');
 const Levels = require('discord-xp');
 const Moderation = require('../models/Moderation');
-const { cleanupEmptyVCs } = require('../utils/vmHandler'); 
-const { initializeCacheCleanup } = require('../utils/cacheHandler'); 
+const { cleanupEmptyVCs } = require('../utils/vmHandler');
+const { initializeCacheCleanup } = require('../utils/cacheHandler');
 
 require('dotenv').config();
 
@@ -22,7 +22,7 @@ module.exports = {
     for (const guild of client.guilds.cache.values()) {
       await ensureGuildConfig(guild.id);
     }
-    
+
     initializeCacheCleanup(client);
     await cleanupEmptyVCs(client);
 
@@ -58,9 +58,14 @@ async function ensureGuildConfig(guildId) {
       });
 
       await moderationData.save();
-      console.log(`✅ Created default moderation settings for guild: ${guildId}`);
+      console.log(
+        `✅ Created default moderation settings for guild: ${guildId}`,
+      );
     }
   } catch (error) {
-    console.error(`❌ Error ensuring moderation settings for ${guildId}:`, error);
+    console.error(
+      `❌ Error ensuring moderation settings for ${guildId}:`,
+      error,
+    );
   }
 }

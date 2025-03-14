@@ -114,11 +114,6 @@ module.exports = {
               inline: true,
             },
             {
-              name: '⏰ **Rate Limit Duration**',
-              value: `${moderationData.rateLimitDuration ?? 10} seconds`,
-              inline: true,
-            },
-            {
               name: '🔒 **Message Filtering**',
               value: moderationData.messageFilterEnabled
                 ? '✅ Enabled'
@@ -214,10 +209,6 @@ async function ensureGuildConfig(guildId) {
         antiRaidThreshold: 5,
         antiRaidAction: 'kick',
         antiRaidTimeframe: 10,
-        rateLimitEnabled: false,
-        rateLimitThreshold: 5,
-        rateLimitTimeframe: 5,
-        rateLimitDuration: 10,
         messageFilterEnabled: false,
         filterLevel: 'normal',
         levelingEnabled: false,

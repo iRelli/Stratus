@@ -22,14 +22,20 @@ async function cleanupEmptyVCs(client) {
         channelId: vcData.channelId,
       });
 
-      if (j2cData && j2cData.channelName === "Join to Create") {
-        console.log(`⚠️ Skipping deletion: ${vcData.channelId} is the Join to Create channel.`);
+      if (j2cData && j2cData.channelName === 'Join to Create') {
+        console.log(
+          `⚠️ Skipping deletion: ${vcData.channelId} is the Join to Create channel.`,
+        );
         continue; // ✅ Skip J2C channel
       }
 
-      const channel = await guild.channels.fetch(vcData.channelId).catch(() => null);
+      const channel = await guild.channels
+        .fetch(vcData.channelId)
+        .catch(() => null);
       if (!channel) {
-        console.log(`🗑️ Channel ${vcData.channelId} does not exist. Removing from database.`);
+        console.log(
+          `🗑️ Channel ${vcData.channelId} does not exist. Removing from database.`,
+        );
         await VoiceChannelCreate.deleteOne({ channelId: vcData.channelId });
         continue;
       }
@@ -40,7 +46,10 @@ async function cleanupEmptyVCs(client) {
         await VoiceChannelCreate.deleteOne({ channelId: vcData.channelId });
       }
     } catch (error) {
-      console.error(`❌ Error checking/deleting voice channel ${vcData.channelId}:`, error);
+      console.error(
+        `❌ Error checking/deleting voice channel ${vcData.channelId}:`,
+        error,
+      );
     }
   }
 

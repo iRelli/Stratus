@@ -28,8 +28,7 @@ async function getCachedServerData(client, guildId) {
         members.filter((m) => m.presence?.status === 'online').size || 0;
       const idle =
         members.filter((m) => m.presence?.status === 'idle').size || 0;
-      const dnd =
-        members.filter((m) => m.presence?.status === 'dnd').size || 0;
+      const dnd = members.filter((m) => m.presence?.status === 'dnd').size || 0;
       const offline = totalMembers - (online + idle + dnd);
       const bots = members.filter((m) => m.user.bot).size || 0;
       const mobile =
@@ -85,9 +84,12 @@ function initializeCacheCleanup(client) {
     global.client = client;
   }
 
-  setInterval(() => {
-    cleanExpiredCache(client);
-  }, 5 * 60 * 1000); 
+  setInterval(
+    () => {
+      cleanExpiredCache(client);
+    },
+    5 * 60 * 1000,
+  );
 }
 
 module.exports = { getCachedServerData, initializeCacheCleanup };

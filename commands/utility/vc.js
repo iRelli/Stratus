@@ -1,4 +1,9 @@
-const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
+const {
+  SlashCommandBuilder,
+  PermissionFlagsBits,
+  ActionRowBuilder,
+  StringSelectMenuBuilder,
+} = require('discord.js');
 const VoiceChannelCreate = require('../../models/VoiceChannelCreate');
 
 module.exports = {
@@ -8,24 +13,12 @@ module.exports = {
     .addSubcommand((subcommand) =>
       subcommand
         .setName('ban')
-        .setDescription('Bans a user from your voice channel.')
-        .addUserOption((option) =>
-          option
-            .setName('user')
-            .setDescription('User to ban')
-            .setRequired(true),
-        ),
+        .setDescription('Bans a user from your voice channel.'),
     )
     .addSubcommand((subcommand) =>
       subcommand
         .setName('permit')
-        .setDescription('Allows a user to join your voice channel.')
-        .addUserOption((option) =>
-          option
-            .setName('user')
-            .setDescription('User to allow')
-            .setRequired(true),
-        ),
+        .setDescription('Allows a user to join your voice channel.'),
     )
     .addSubcommand((subcommand) =>
       subcommand.setName('lock').setDescription('Locks your voice channel.'),
@@ -36,9 +29,7 @@ module.exports = {
         .setDescription('Unlocks your voice channel.'),
     )
     .addSubcommand((subcommand) =>
-      subcommand
-        .setName('hide')
-        .setDescription('Hides your voice channel from others.'),
+      subcommand.setName('hide').setDescription('Hides your voice channel.'),
     )
     .addSubcommand((subcommand) =>
       subcommand
@@ -46,15 +37,7 @@ module.exports = {
         .setDescription('Makes your voice channel visible to everyone.'),
     )
     .addSubcommand((subcommand) =>
-      subcommand
-        .setName('invite')
-        .setDescription('Sends a voice channel invite to a user via DM.')
-        .addUserOption((option) =>
-          option
-            .setName('user')
-            .setDescription('User to invite')
-            .setRequired(true),
-        ),
+      subcommand.setName('invite').setDescription('Invite a user to your VC.'),
     )
     .addSubcommand((subcommand) =>
       subcommand
@@ -71,15 +54,19 @@ module.exports = {
       subcommand
         .setName('claim')
         .setDescription('Claim a voice channel if the owner has left.'),
+    )
+    .addSubcommand((subcommand) =>
+      subcommand
+        .setName('rename')
+        .setDescription("'Renames your voice channel."),
     ),
 
   async execute(interaction) {
     const subcommand = interaction.options.getSubcommand();
     const userId = interaction.user.id;
     const guildId = interaction.guild.id;
-    const userDisplayName = interaction.member.displayName;
-
     const userVoiceChannel = interaction.member.voice.channel;
+
     if (!userVoiceChannel) {
       return interaction.reply({
         content: '❌ You are not in a voice channel.',
@@ -114,40 +101,51 @@ module.exports = {
       });
     }
 
-    if (subcommand === 'ban') {
-      const targetUser = interaction.options.getUser('user');
-      const member = interaction.guild.members.cache.get(targetUser.id);
+    if (
+      subcommand === 'ban' ||
+      subcommand === 'permit' ||
+      subcommand === 'invite'
+    ) {
+      const members = userVoiceChannel.members
+        .filter((m) => !m.user.bot && m.id !== userId)
+        .map((m) => ({
+          label: m.displayName,
+          description: `@${m.user.username}`,
+          value: m.id,
+        }));
 
-      if (
-        member &&
-        member.voice.channel &&
-        member.voice.channel.id === channel.id
-      ) {
-        await member.voice.disconnect('Banned from the voice channel.');
+      if (members.length === 0) {
+        return interaction.reply({
+          content: `❌ No users available to ${subcommand}.`,
+          ephemeral: true,
+        });
       }
 
-      await channel.permissionOverwrites.edit(targetUser.id, {
-        Connect: false,
-      });
+      const selectMenu = new StringSelectMenuBuilder()
+        .setCustomId(`vc_${subcommand}`)
+        .setPlaceholder(`🔍 Select a user to ${subcommand}...`)
+        .addOptions(members.slice(0, 25));
+
+      const row = new ActionRowBuilder().addComponents(selectMenu);
 
       return interaction.reply({
-        content: `✅ Banned <@${targetUser.id}> from your voice channel and disconnected them.`,
-        ephemeral: true,
-      });
-    }
-
-    if (subcommand === 'permit') {
-      const targetUser = interaction.options.getUser('user');
-      await channel.permissionOverwrites.edit(targetUser.id, {
-        Connect: true,
-      });
-      return interaction.reply({
-        content: `✅ Allowed <@${targetUser.id}> to join your voice channel.`,
+        content: `🔹 Select a user to **${subcommand}**:`,
+        components: [row],
         ephemeral: true,
       });
     }
 
     if (subcommand === 'lock') {
+      if (
+        !channel
+          .permissionsFor(interaction.guild.roles.everyone)
+          .has(PermissionFlagsBits.Connect)
+      ) {
+        return interaction.reply({
+          content: '🔒 Your voice channel is already locked.',
+          ephemeral: true,
+        });
+      }
       await channel.permissionOverwrites.edit(
         interaction.guild.roles.everyone,
         {
@@ -155,12 +153,22 @@ module.exports = {
         },
       );
       return interaction.reply({
-        content: '✅ Your voice channel is now locked.',
+        content: '🔒 Your voice channel is now locked.',
         ephemeral: true,
       });
     }
 
     if (subcommand === 'unlock') {
+      if (
+        channel
+          .permissionsFor(interaction.guild.roles.everyone)
+          .has(PermissionFlagsBits.Connect)
+      ) {
+        return interaction.reply({
+          content: '🔓 Your voice channel is already unlocked.',
+          ephemeral: true,
+        });
+      }
       await channel.permissionOverwrites.edit(
         interaction.guild.roles.everyone,
         {
@@ -168,12 +176,22 @@ module.exports = {
         },
       );
       return interaction.reply({
-        content: '✅ Your voice channel is now unlocked.',
+        content: '🔓 Your voice channel is now unlocked.',
         ephemeral: true,
       });
     }
 
     if (subcommand === 'hide') {
+      if (
+        !channel
+          .permissionsFor(interaction.guild.roles.everyone)
+          .has(PermissionFlagsBits.ViewChannel)
+      ) {
+        return interaction.reply({
+          content: '🙈 Your voice channel is already hidden.',
+          ephemeral: true,
+        });
+      }
       await channel.permissionOverwrites.edit(
         interaction.guild.roles.everyone,
         {
@@ -181,12 +199,22 @@ module.exports = {
         },
       );
       return interaction.reply({
-        content: '✅ Your voice channel is now hidden.',
+        content: '🙈 Your voice channel is now hidden.',
         ephemeral: true,
       });
     }
 
     if (subcommand === 'unhide') {
+      if (
+        channel
+          .permissionsFor(interaction.guild.roles.everyone)
+          .has(PermissionFlagsBits.ViewChannel)
+      ) {
+        return interaction.reply({
+          content: '👁️ Your voice channel is already visible.',
+          ephemeral: true,
+        });
+      }
       await channel.permissionOverwrites.edit(
         interaction.guild.roles.everyone,
         {
@@ -194,38 +222,9 @@ module.exports = {
         },
       );
       return interaction.reply({
-        content: '✅ Your voice channel is now visible.',
+        content: '👁️ Your voice channel is now visible.',
         ephemeral: true,
       });
-    }
-
-    if (subcommand === 'invite') {
-      const targetUser = interaction.options.getUser('user');
-
-      try {
-        const invite = await channel.createInvite({
-          maxAge: 3600,
-          maxUses: 1,
-          unique: true,
-          reason: `Invite created by ${interaction.user.tag}`,
-        });
-
-        await targetUser.send({
-          content: `📩 **You have been invited to join a voice channel!**\n🔗 Click to join: ${invite.url}`,
-        });
-
-        return interaction.reply({
-          content: `✅ Successfully sent an invite to <@${targetUser.id}> via DM.`,
-          ephemeral: true,
-        });
-      } catch (error) {
-        console.error('❌ Error sending invite via DM:', error);
-
-        return interaction.reply({
-          content: `❌ Could not send the invite to <@${targetUser.id}>. They may have DMs disabled.`,
-          ephemeral: true,
-        });
-      }
     }
 
     if (subcommand === 'limit') {
@@ -254,15 +253,27 @@ module.exports = {
         });
       }
 
-      const newChannelName = `${userDisplayName}'s VC`;
-      await channel.setName(newChannelName);
       await VoiceChannelCreate.findOneAndUpdate(
         { guildId, channelId: vcData.channelId },
-        { ownerId: userId, channelName: newChannelName },
+        { ownerId: userId },
       );
 
       return interaction.reply({
-        content: `✅ You have claimed ownership of the voice channel and renamed it to **${newChannelName}**.`,
+        content: `✅ You have claimed ownership of the voice channel.`,
+        ephemeral: true,
+      });
+    }
+    if (subcommand === 'rename') {
+      const newName = interaction.options.getString('name');
+      if (newName.length > 32) {
+        return interaction.reply({
+          content: '❌ Channel name cannot exceed 32 characters.',
+          ephemeral: true,
+        });
+      }
+      await userVoiceChannel.setName(newName);
+      return interaction.reply({
+        content: `✅ Your voice channel has been renamed to **${newName}**.`,
         ephemeral: true,
       });
     }

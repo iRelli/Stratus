@@ -161,7 +161,7 @@ module.exports = {
       case 'limit': {
         const limitModal = new ModalBuilder()
           .setCustomId('limitModal')
-          .setTitle('Set Voice Channel Limit');
+          .setTitle('Set Voicie Channel Limit');
 
         const limitInput = new TextInputBuilder()
           .setCustomId('limitInput')

@@ -71,9 +71,7 @@ module.exports = {
         if (logChannel) {
           const embed = new EmbedBuilder()
             .setColor(enabled ? 'Green' : 'Red')
-            .setTitle(
-              enabled ? '✅ Anti-Raid Enabled' : '❌ Anti-Raid Disabled',
-            )
+            .setTitle(enabled ? ' Anti-Raid Enabled' : ' Anti-Raid Disabled')
             .addFields(
               {
                 name: 'Changed By',
@@ -91,7 +89,7 @@ module.exports = {
         }
 
         return interaction.reply(
-          `✅ **Anti-raid protection has been ${enabled ? 'enabled' : 'disabled'}.**`,
+          ` **Anti-raid protection has been ${enabled ? 'enabled' : 'disabled'}.**`,
         );
       }
 
@@ -133,13 +131,13 @@ module.exports = {
         }
 
         return interaction.reply(
-          `✅ **Anti-raid settings updated:**\nThreshold: ${threshold} joins\nTimeframe: ${timeframe} seconds\nAction: ${action.toUpperCase()}`,
+          ` **Anti-raid settings updated:**\nThreshold: ${threshold} joins\nTimeframe: ${timeframe} seconds\nAction: ${action.toUpperCase()}`,
         );
       }
     } catch (error) {
       console.error('Error updating anti-raid settings:', error);
       return interaction.reply({
-        content: '❌ An error occurred while updating anti-raid settings.',
+        content: ' An error occurred while updating anti-raid settings.',
         flags: 64,
       });
     }

@@ -15,7 +15,7 @@ module.exports = (client) => {
       const command = require(`../commands/${folder}/${file}`);
       if (command.data && command.execute) {
         client.commands.set(command.data.name, command);
-        console.log(`✅ Loaded command: ${command.data.name}`);
+        console.log(` Loaded command: ${command.data.name}`);
       } else {
         console.warn(`⚠️ Skipping invalid command file: ${file}`);
       }

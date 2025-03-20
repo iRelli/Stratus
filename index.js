@@ -2,6 +2,7 @@ require('dotenv').config();
 const { Client, GatewayIntentBits, Collection } = require('discord.js');
 const loadCommands = require('./handlers/commandHandler');
 const loadEvents = require('./handlers/eventHandler');
+const { LavaShark } = require('lavashark');
 
 const client = new Client({
   intents: Object.keys(GatewayIntentBits).map((a) => GatewayIntentBits[a]),

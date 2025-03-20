@@ -27,13 +27,13 @@ module.exports = {
       await moderationData.save();
 
       return interaction.reply({
-        content: `✅ Leveling has been **${enabled ? 'enabled' : 'disabled'}**.`,
+        content: ` Leveling has been **${enabled ? 'enabled' : 'disabled'}**.`,
         flags: 64,
       });
     } catch (error) {
       console.error('Error togglingg leveling system:', error);
       return interaction.reply({
-        content: '❌ An error occurred while updating the leveling system.',
+        content: ' An error occurred while updating the leveling system.',
         flags: 64,
       });
     }

@@ -17,7 +17,6 @@ module.exports = {
     await interaction.deferReply();
 
     try {
-      // ✅ Load Command Categories
       const commandFolders = fs.readdirSync(path.join(__dirname, '../'));
       let commands = [];
 
@@ -37,7 +36,6 @@ module.exports = {
         });
       }
 
-      // ✅ Pagination setup
       let page = 0;
       const perPage = 3;
       const totalPages = Math.ceil(commands.length / perPage);
@@ -61,7 +59,6 @@ module.exports = {
           .setTimestamp();
       };
 
-      // ✅ Create Pagination Buttons
       const buttonRow = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
           .setCustomId('prev')
@@ -85,7 +82,6 @@ module.exports = {
         ephemeral: true,
       });
 
-      // ✅ Interaction Collector (Only for Author)
       const filter = (i) => i.user.id === interaction.user.id;
       const collector = message.createMessageComponentCollector({
         filter,
@@ -128,7 +124,6 @@ module.exports = {
         });
       });
 
-      // ✅ Expire Interaction (Auto-remove after 60s)
       collector.on('end', async () => {
         try {
           await interaction.editReply({
@@ -141,10 +136,10 @@ module.exports = {
         }
       });
     } catch (error) {
-      console.error('❌ Error generating help menu:', error);
+      console.error(' Error generating help menu:', error);
       return interaction.editReply({
         content:
-          '❌ An error occurred while generating the help menu. Try again later.',
+          ' An error occurred while generating the help menu. Try again later.',
       });
     }
   },

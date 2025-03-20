@@ -5,13 +5,11 @@ const Moderation = require('../models/Moderation');
 const Levels = require('discord-xp');
 const AFK = require('../models/afkSchema');
 
-const xpCooldowns = new Set(); // ✅ Prevents XP farming by limiting messages per user
-
+const xpCooldowns = new Set();
 module.exports = {
   name: 'messageCreate',
   async execute(message) {
-    // ✅ FIXED: Remove `client` parameter
-    if (!message || !message.author) return; // ✅ Prevents undefined errors
+    if (!message || !message.author) return;
 
     if (message.author.bot || !message.guild) return;
 
@@ -22,16 +20,13 @@ module.exports = {
 
     if (!moderationData) return;
 
-    // ✅ Check if MongoDB is connected before querying
     if (mongoose.connection.readyState !== 1) {
-      console.error('❌ Mongoose is not connected. Skipping XP processing.');
+      console.error(' Mongoose is not connected. Skipping XP processing.');
       return;
     }
 
-    // ✅ Check if user is a Trusted User (bypass filtering)
     if (moderationData.trustedUsers?.has(userId)) return;
 
-    // ✅ Remove AFK status if the user sends a message
     try {
       const afkStatus = await AFK.findOne({ userId });
       if (afkStatus) {
@@ -44,7 +39,6 @@ module.exports = {
       console.error('Error removing AFK status on messageCreate:', error);
     }
 
-    // ✅ MESSAGE FILTERING SYSTEM
     if (moderationData.messageFilterEnabled) {
       const FILTER_THRESHOLDS = { normal: 0.75, harsh: 0.6, extreme: 0.45 };
       const threshold = FILTER_THRESHOLDS[moderationData.filterLevel] || 0.75;
@@ -107,14 +101,12 @@ module.exports = {
       }
     }
 
-    // ✅ LEVELING SYSTEM (XP Gain with Cooldown)
     if (moderationData.levelingEnabled) {
-      if (xpCooldowns.has(userId)) return; // Prevents spam abuse
+      if (xpCooldowns.has(userId)) return;
 
       xpCooldowns.add(userId);
-      setTimeout(() => xpCooldowns.delete(userId), 60000); // 1-minute cooldown
-
-      const randomXP = Math.floor(Math.random() * 10) + 15; // XP range: 15-25
+      setTimeout(() => xpCooldowns.delete(userId), 60000);
+      const randomXP = Math.floor(Math.random() * 10) + 15;
       const hasLeveledUp = await Levels.appendXp(userId, guildId, randomXP);
 
       if (hasLeveledUp) {

@@ -4,7 +4,6 @@ const canvacord = require('canvacord');
 const path = require('path');
 const fs = require('fs');
 
-// ✅ Load default fonts for proper rendering
 require('canvacord').Font.loadDefault();
 
 module.exports = {
@@ -22,20 +21,20 @@ module.exports = {
     await interaction.deferReply();
     try {
       const targetUser =
-        interaction.options.getUser('user') || interaction.user; // ✅ Defaults to self
-      const targetMember = await interaction.guild.members.fetch(targetUser.id); // ✅ Fetch full member data
+        interaction.options.getUser('user') || interaction.user;
+      const targetMember = await interaction.guild.members.fetch(targetUser.id);
       const guildId = interaction.guild?.id;
 
       if (!guildId) {
         return interaction.editReply({
-          content: '❌ This command must be used in a server.',
+          content: ' This command must be used in a server.',
         });
       }
 
       const userLevel = await Levels.fetch(targetUser.id, guildId, true);
       if (!userLevel) {
         return interaction.editReply({
-          content: `❌ ${targetUser.username} has no XP yet!`,
+          content: ` ${targetUser.username} has no XP yet!`,
         });
       }
 
@@ -88,10 +87,10 @@ module.exports = {
 
       return interaction.editReply({ files: [attachment] });
     } catch (error) {
-      console.error('❌ Error generating level card:', error);
+      console.error(' Error generating level card:', error);
       return interaction.editReply({
         content:
-          '❌ An error occurred while generating the level card. Try again later.',
+          ' An error occurred while generating the level card. Try again later.',
       });
     }
   },

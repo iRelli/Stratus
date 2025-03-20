@@ -58,7 +58,7 @@ module.exports = {
       if (duration > 10080) {
         return interaction.reply({
           content:
-            '❌ The timeout duration cannot exceed 7 days (10080 minutes).',
+            ' The timeout duration cannot exceed 7 days (10080 minutes).',
           flags: 64,
         });
       }
@@ -67,7 +67,7 @@ module.exports = {
       if (!member.moderatable) {
         return interaction.reply({
           content:
-            '❌ I cannot timeout this user. They may have a higher role or permissions.',
+            ' I cannot timeout this user. They may have a higher role or permissions.',
           flags: 64,
         });
       }
@@ -81,7 +81,7 @@ module.exports = {
 
       await member.timeout(duration * 60 * 1000, reason);
       interaction.reply({
-        content: `✅ **${user.tag}** has been timed out for **${duration} minutes**.`,
+        content: ` **${user.tag}** has been timed out for **${duration} minutes**.`,
         flags: 64,
       });
 

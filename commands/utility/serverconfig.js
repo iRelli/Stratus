@@ -57,14 +57,14 @@ module.exports = {
       try {
         const guildId = interaction.guild.id;
 
-        // ✅ Ensure Default Configuration Exists
+        //  Ensure Default Configuration Exists
         let moderationData = await Moderation.findOne({ guildId });
         if (!moderationData) {
           await ensureGuildConfig(guildId);
           moderationData = await Moderation.findOne({ guildId });
         }
 
-        // ✅ Create Embed with Default Values if Necessary
+        //  Create Embed with Default Values if Necessary
         const embed = new EmbedBuilder()
           .setColor('#2F3136')
           .setTitle('⚙️ Server Configuration')
@@ -86,9 +86,7 @@ module.exports = {
             },
             {
               name: '🛑 **Anti-Raid Protection**',
-              value: moderationData.antiRaidEnabled
-                ? '✅ Enabled'
-                : '❌ Disabled',
+              value: moderationData.antiRaidEnabled ? ' Enabled' : ' Disabled',
               inline: true,
             },
             {
@@ -103,9 +101,7 @@ module.exports = {
             },
             {
               name: '⏳ **Rate Limit Protection**',
-              value: moderationData.rateLimitEnabled
-                ? '✅ Enabled'
-                : '❌ Disabled',
+              value: moderationData.rateLimitEnabled ? ' Enabled' : ' Disabled',
               inline: true,
             },
             {
@@ -114,10 +110,10 @@ module.exports = {
               inline: true,
             },
             {
-              name: '🔒 **Message Filtering**',
+              name: ' **Message Filtering**',
               value: moderationData.messageFilterEnabled
-                ? '✅ Enabled'
-                : '❌ Disabled',
+                ? ' Enabled'
+                : ' Disabled',
               inline: true,
             },
             {
@@ -127,9 +123,7 @@ module.exports = {
             },
             {
               name: '📈 **Leveling System**',
-              value: moderationData.levelingEnabled
-                ? '✅ Enabled'
-                : '❌ Disabled',
+              value: moderationData.levelingEnabled ? ' Enabled' : ' Disabled',
               inline: true,
             },
             {
@@ -146,10 +140,10 @@ module.exports = {
 
         return interaction.editReply({ embeds: [embed] });
       } catch (error) {
-        console.error('❌ Error fetching moderation settings:', error);
+        console.error(' Error fetching moderation settings:', error);
         return interaction.editReply({
           content:
-            '❌ An error occurred while fetching the moderation settings. Try again later.',
+            ' An error occurred while fetching the moderation settings. Try again later.',
         });
       }
     } else if (subcommand === 'edit') {
@@ -159,7 +153,7 @@ module.exports = {
         )
       ) {
         return interaction.reply({
-          content: '❌ You do not have permission to use this command.',
+          content: ' You do not have permission to use this command.',
           ephemeral: true,
         });
       }
@@ -180,14 +174,14 @@ module.exports = {
         await moderationData.save();
 
         return interaction.reply({
-          content: `✅ The setting **${setting}** has been updated to **${value}**.`,
+          content: ` The setting **${setting}** has been updated to **${value}**.`,
           ephemeral: true,
         });
       } catch (error) {
-        console.error('❌ Error updating moderation settings:', error);
+        console.error(' Error updating moderation settings:', error);
         return interaction.reply({
           content:
-            '❌ An error occurred while updating the moderation settings. Try again later.',
+            ' An error occurred while updating the moderation settings. Try again later.',
           ephemeral: true,
         });
       }
@@ -195,7 +189,7 @@ module.exports = {
   },
 };
 
-// ✅ Function to Ensure Default Moderation Schema Exists
+//  Function to Ensure Default Moderation Schema Exists
 async function ensureGuildConfig(guildId) {
   try {
     let moderationData = await Moderation.findOne({ guildId });
@@ -216,14 +210,9 @@ async function ensureGuildConfig(guildId) {
       });
 
       await moderationData.save();
-      console.log(
-        `✅ Created default moderation settings for guild: ${guildId}`,
-      );
+      console.log(` Created default moderation settings for guild: ${guildId}`);
     }
   } catch (error) {
-    console.error(
-      `❌ Error ensuring moderation settings for ${guildId}:`,
-      error,
-    );
+    console.error(` Error ensuring moderation settings for ${guildId}:`, error);
   }
 }

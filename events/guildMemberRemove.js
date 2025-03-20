@@ -14,7 +14,7 @@ module.exports = {
     );
     if (!logChannel) return;
 
-    const auditLogs = await member.guild.fetchAuditLogs({ type: 22, limit: 1 }); // Typ 22 means Ban
+    const auditLogs = await member.guild.fetchAuditLogs({ type: 22, limit: 1 });
     const banLog = auditLogs.entries.first();
 
     if (banLog && banLog.target.id === member.id) {

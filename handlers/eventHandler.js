@@ -15,7 +15,7 @@ module.exports = (client) => {
       client.on(event.name, (...args) => event.execute(...args));
     }
 
-    console.log(`✅ Loaded event: ${event.name}`);
+    console.log(` Loaded event: ${event.name}`);
   }
 
   console.log('🚀 All events loaded successfully!');

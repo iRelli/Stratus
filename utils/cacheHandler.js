@@ -1,6 +1,6 @@
 const Moderation = require('../models/Moderation');
 
-const CACHE_EXPIRY_TIME = 10 * 60 * 1000; // 10 minutes
+const CACHE_EXPIRY_TIME = 10 * 60 * 1000;
 
 async function getCachedServerData(client, guildId) {
   if (!client.cache) {
@@ -54,7 +54,7 @@ async function getCachedServerData(client, guildId) {
       client.cache.servers.set(guildId, cachedData);
       client.cache.cacheTimestamps.set(guildId, now);
     } catch (error) {
-      console.error(`❌ Error fetching data for guild ${guildId}:`, error);
+      console.error(` Error fetching data for guild ${guildId}:`, error);
     }
   }
 

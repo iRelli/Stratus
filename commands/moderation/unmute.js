@@ -43,7 +43,7 @@ module.exports = {
       const member = await guild.members.fetch(user.id);
       if (!member.isCommunicationDisabled()) {
         return interaction.reply({
-          content: '❌ This user is not muted.',
+          content: ' This user is not muted.',
           flags: 64,
         });
       }
@@ -57,7 +57,7 @@ module.exports = {
 
       await member.timeout(null);
       interaction.reply({
-        content: `✅ **${user.tag}** has been unmuted.`,
+        content: ` **${user.tag}** has been unmuted.`,
         flags: 64,
       });
 

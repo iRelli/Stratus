@@ -58,7 +58,7 @@ module.exports = {
     } catch (error) {
       console.error('Error fetching user info:', error);
       return interaction.reply({
-        content: '❌ An error occurred while fetching user information.',
+        content: ' An error occurred while fetching user information.',
         flags: 64,
       });
     }

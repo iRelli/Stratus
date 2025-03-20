@@ -68,7 +68,7 @@ module.exports = {
         if (logChannel) {
           const embed = new EmbedBuilder()
             .setColor('Green')
-            .setTitle('✅ Trusted User Added')
+            .setTitle(' Trusted User Added')
             .addFields(
               { name: 'User', value: `<@${user.id}>`, inline: true },
               {
@@ -87,7 +87,7 @@ module.exports = {
         }
 
         return interaction.reply({
-          content: `✅ **${user.tag}** has been added to the trusted list.`,
+          content: ` **${user.tag}** has been added to the trusted list.`,
           flags: 64,
         });
       }
@@ -107,7 +107,7 @@ module.exports = {
         if (logChannel) {
           const embed = new EmbedBuilder()
             .setColor('Red')
-            .setTitle('❌ Trusted User Removed')
+            .setTitle(' Trusted User Removed')
             .addFields(
               { name: 'User', value: `<@${user.id}>`, inline: true },
               {
@@ -126,7 +126,7 @@ module.exports = {
         }
 
         return interaction.reply({
-          content: `✅ **${user.tag}** has been removed from the trusted list.`,
+          content: ` **${user.tag}** has been removed from the trusted list.`,
           flags: 64,
         });
       }
@@ -159,7 +159,7 @@ module.exports = {
     } catch (error) {
       console.error('Error handling `/trusted` command:', error);
       return interaction.reply({
-        content: '❌ An error occurred while processing your request.',
+        content: ' An error occurred while processing your request.',
         flags: 64,
       });
     }

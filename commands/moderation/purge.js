@@ -112,13 +112,13 @@ module.exports = {
         console.error(err);
         return interaction.reply({
           content:
-            '❌ Failed to delete messages. Some may be older than 14 days.',
+            ' Failed to delete messages. Some may be older than 14 days.',
           flags: 64,
         });
       });
 
       return interaction.reply({
-        content: `✅ Successfully deleted **${filteredMessages.size}** messages.`,
+        content: ` Successfully deleted **${filteredMessages.size}** messages.`,
         flags: 64,
       });
     } catch (error) {

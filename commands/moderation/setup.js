@@ -62,7 +62,7 @@ module.exports = {
         interaction.client.cache.servers.set(guild.id, moderationData);
 
         return interaction.reply({
-          content: `✅ **Moderation log channel set up successfully:** ${logChannel}`,
+          content: ` **Moderation log channel set up successfully:** ${logChannel}`,
           flags: 64,
         });
       }
@@ -87,7 +87,7 @@ module.exports = {
         interaction.client.cache.servers.set(guild.id, moderationData);
 
         return interaction.reply({
-          content: '✅ Moderation log channel has been **reset** and removed.',
+          content: ' Moderation log channel has been **reset** and removed.',
           flags: 64,
         });
       }

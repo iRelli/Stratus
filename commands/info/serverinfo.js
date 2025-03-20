@@ -18,11 +18,11 @@ module.exports = {
       const moderationData = await Moderation.findOne({ guildId: guild.id });
 
       const messageFilterStatus = moderationData?.messageFilterEnabled
-        ? `✅ Enabled (${moderationData.filterLevel.toUpperCase()})`
-        : '❌ Disabled';
+        ? ` Enabled (${moderationData.filterLevel.toUpperCase()})`
+        : ' Disabled';
       const antiRaidStatus = moderationData?.antiRaidEnabled
-        ? `✅ Enabled (Threshold: ${moderationData.antiRaidThreshold}, Action: ${moderationData.antiRaidAction.toUpperCase()})`
-        : '❌ Disabled';
+        ? ` Enabled (Threshold: ${moderationData.antiRaidThreshold}, Action: ${moderationData.antiRaidAction.toUpperCase()})`
+        : ' Disabled';
 
       const embed = new EmbedBuilder()
         .setColor('#2F3136')
@@ -52,7 +52,7 @@ module.exports = {
           { name: '----------------------', value: '⠀' },
           {
             name: '💎 **Boosts & Security**',
-            value: `**🔒 Verification:** ${serverData.verificationLevel}\n**💠 Boosts:** ${serverData.boostCount || 0}\n**Level:** ${serverData.boostLevel}`,
+            value: `** Verification:** ${serverData.verificationLevel}\n**💠 Boosts:** ${serverData.boostCount || 0}\n**Level:** ${serverData.boostLevel}`,
           },
           { name: '----------------------', value: '⠀' },
           {

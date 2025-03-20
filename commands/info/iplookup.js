@@ -21,7 +21,7 @@ module.exports = {
 
       if (data.status === 'fail') {
         return interaction.reply({
-          content: `❌ **Error:** ${data.message}`,
+          content: ` **Error:** ${data.message}`,
           ephemeral: true,
         });
       }
@@ -61,7 +61,7 @@ module.exports = {
     } catch (error) {
       console.error(error);
       await interaction.reply({
-        content: '❌ Failed to fetch IP details. Please try again later.',
+        content: ' Failed to fetch IP details. Please try again later.',
       });
     }
   },

@@ -21,9 +21,7 @@ module.exports = {
     .addSubcommand((subcommand) =>
       subcommand
         .setName('reset')
-        .setDescription(
-          'Deletes the Join to Create system (voice channel, category, and database).',
-        ),
+        .setDescription('Deletes the Join to Create system.'),
     )
     .addSubcommand((subcommand) =>
       subcommand
@@ -35,14 +33,24 @@ module.exports = {
     const guild = interaction.guild;
     const subcommand = interaction.options.getSubcommand();
 
+    const existingJ2C = await VoiceChannelCreate.findOne({
+      guildId: guild.id,
+      generator: true,
+    });
+
     if (subcommand === 'setup') {
+      if (existingJ2C) {
+        return interaction.reply({
+          content: '⚠️ The Join to Create system is already set up!',
+          ephemeral: true,
+        });
+      }
+
       try {
         const category = await guild.channels.create({
           name: 'Join to Create',
           type: ChannelType.GuildCategory,
         });
-
-        console.log(`✅ Created category: ${category.name}`);
 
         const j2cChannel = await guild.channels.create({
           name: 'Join to Create',
@@ -50,113 +58,101 @@ module.exports = {
           parent: category.id,
         });
 
-        console.log(`✅ Created J2C channel: ${j2cChannel.name}`);
+        console.log(` Created J2C channel: ${j2cChannel.name}`);
 
-        await VoiceChannelCreate.findOneAndUpdate(
-          { guildId: guild.id },
-          {
-            guildId: guild.id,
-            channelId: j2cChannel.id,
-            categoryId: category.id,
-            channelName: j2cChannel.name,
-          },
-          { upsert: true },
-        );
+        await VoiceChannelCreate.create({
+          guildId: guild.id,
+          channelId: j2cChannel.id,
+          categoryId: category.id,
+          generator: true,
+        });
 
-        console.log(`✅ Saved to database: Guild ${guild.id}`);
+        console.log(` Saved J2C to database for Guild ${guild.id}`);
 
         await interaction.reply({
-          content: `✅ Successfully created **Join to Create** system!`,
+          content: ` Successfully created **Join to Create** system!`,
           ephemeral: true,
         });
       } catch (err) {
-        console.error('❌ Error setting up J2C:', err);
+        console.error(' Error setting up J2C:', err);
         await interaction.reply({
-          content: '❌ Failed to create Join to Create system.',
+          content: ' Failed to create Join to Create system.',
           ephemeral: true,
         });
       }
     } else if (subcommand === 'reset') {
+      if (!existingJ2C) {
+        return interaction.reply({
+          content: '⚠️ No Join to Create system found for this server.',
+          ephemeral: true,
+        });
+      }
+
       try {
-        const j2cData = await VoiceChannelCreate.findOne({ guildId: guild.id });
-
-        if (!j2cData) {
-          return interaction.reply({
-            content: '❌ No Join to Create system found for this server.',
-            ephemeral: true,
-          });
-        }
-
-        const j2cChannel = await guild.channels.cache.get(j2cData.channelId);
+        const j2cChannel = guild.channels.cache.get(existingJ2C.channelId);
         if (j2cChannel) {
           await j2cChannel.delete();
           console.log(`🗑️ Deleted J2C channel: ${j2cChannel.name}`);
         }
 
-        const category = await guild.channels.cache.get(j2cData.categoryId);
+        const category = guild.channels.cache.get(existingJ2C.categoryId);
         if (category) {
           await category.delete();
           console.log(`🗑️ Deleted category: ${category.name}`);
-        } else {
-          console.log(`⚠️ No category found for ID: ${j2cData.categoryId}`);
         }
 
-        await VoiceChannelCreate.deleteOne({ guildId: guild.id });
+        await VoiceChannelCreate.deleteOne({
+          guildId: guild.id,
+          generator: true,
+        });
         console.log(`🗑️ Removed J2C data from database for guild ${guild.id}`);
 
         await interaction.reply({
-          content: '✅ Successfully removed **Join to Create** system!',
+          content: ' Successfully removed **Join to Create** system!',
           ephemeral: true,
         });
       } catch (err) {
-        console.error('❌ Error resetting J2C:', err);
+        console.error(' Error resetting J2C:', err);
         await interaction.reply({
-          content: '❌ Failed to remove Join to Create system.',
+          content: ' Failed to remove Join to Create system.',
           ephemeral: true,
         });
       }
     } else if (subcommand === 'info') {
-      try {
-        const j2cData = await VoiceChannelCreate.findOne({ guildId: guild.id });
-
-        if (!j2cData) {
-          return interaction.reply({
-            content: '❌ No Join to Create system found in the database.',
-            ephemeral: true,
-          });
-        }
-
-        const category = guild.channels.cache.get(j2cData.categoryId);
-        const j2cChannel = guild.channels.cache.get(j2cData.channelId);
-
-        const embed = new EmbedBuilder()
-          .setTitle('📊 Join to Create Configuration')
-          .setColor('Blue')
-          .addFields(
-            { name: 'Guild ID', value: j2cData.guildId, inline: true },
-            {
-              name: 'J2C Channel',
-              value: j2cChannel ? `<#${j2cChannel.id}>` : '❌ Not Found',
-              inline: true,
-            },
-            {
-              name: 'Category',
-              value: category ? category.name : '❌ Not Found',
-              inline: true,
-            },
-            { name: 'Category ID', value: j2cData.categoryId || '❌ Missing' },
-            { name: 'Channel ID', value: j2cData.channelId || '❌ Missing' },
-          )
-          .setTimestamp();
-
-        await interaction.reply({ embeds: [embed], ephemeral: true });
-      } catch (err) {
-        console.error('❌ Error fetching J2C info:', err);
-        await interaction.reply({
-          content: '❌ Failed to retrieve Join to Create information.',
+      if (!existingJ2C) {
+        return interaction.reply({
+          content: '⚠️ No Join to Create system found in the database.',
           ephemeral: true,
         });
       }
+
+      const category = guild.channels.cache.get(existingJ2C.categoryId);
+      const j2cChannel = guild.channels.cache.get(existingJ2C.channelId);
+
+      const embed = new EmbedBuilder()
+        .setTitle('📊 Join to Create Configuration')
+        .setColor('Blue')
+        .addFields(
+          { name: 'Guild ID', value: existingJ2C.guildId, inline: true },
+          {
+            name: 'J2C Channel',
+            value: j2cChannel ? `<#${j2cChannel.id}>` : ' Not Found',
+            inline: true,
+          },
+          {
+            name: 'Category',
+            value: category ? category.name : ' Not Found',
+            inline: true,
+          },
+          {
+            name: 'Category ID',
+            value: existingJ2C.categoryId || ' Missing',
+          },
+          { name: 'Channel ID', value: existingJ2C.channelId || ' Missing' },
+        )
+        .setTimestamp();
+
+      await interaction.reply({ embeds: [embed], ephemeral: true });
     }
   },
 };

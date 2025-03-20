@@ -26,7 +26,7 @@ module.exports = {
     } catch (error) {
       console.error('Error fetching avatar:', error);
       return interaction.reply({
-        content: '❌ An error occurred while fetching the avatar.',
+        content: ' An error occurred while fetching the avatar.',
         flags: 64,
       });
     }

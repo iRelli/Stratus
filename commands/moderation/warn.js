@@ -183,7 +183,7 @@ module.exports = {
         await moderationData.save();
         interaction.client.cache.servers.set(guildId, moderationData);
         await interaction.reply(
-          `✅ **${amount}** warnings removed from **${user.tag}**. (Total: ${moderationData.warnings.get(user.id)})`,
+          ` **${amount}** warnings removed from **${user.tag}**. (Total: ${moderationData.warnings.get(user.id)})`,
         );
       } else if (subcommand === 'reset') {
         if (!moderationData.moderators.has(interaction.user.id)) {
@@ -195,14 +195,14 @@ module.exports = {
         moderationData.warnings = new Map();
         await moderationData.save();
         interaction.client.cache.servers.set(guildId, moderationData);
-        await interaction.reply('✅ All warnings have been **reset**.');
+        await interaction.reply(' All warnings have been **reset**.');
       } else if (subcommand === 'adjust-limit') {
         const newLimit = interaction.options.getInteger('number');
         moderationData.warningLimit = newLimit;
         await moderationData.save();
         interaction.client.cache.servers.set(guildId, moderationData);
         await interaction.reply(
-          `✅ The warning limit has been adjusted to **${newLimit}**.`,
+          ` The warning limit has been adjusted to **${newLimit}**.`,
         );
       }
     } catch (error) {

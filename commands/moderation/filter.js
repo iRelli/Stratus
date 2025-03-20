@@ -49,7 +49,7 @@ module.exports = {
       moderationData.messageFilterEnabled = enabled;
       await moderationData.save();
       return interaction.reply({
-        content: `✅ Message filtering has been **${enabled ? 'enabled' : 'disabled'}**.`,
+        content: ` Message filtering has been **${enabled ? 'enabled' : 'disabled'}**.`,
         flags: 64,
       });
     }
@@ -59,7 +59,7 @@ module.exports = {
       moderationData.filterLevel = level;
       await moderationData.save();
       return interaction.reply({
-        content: `✅ Message filter level set to **${level.toUpperCase()}**.`,
+        content: ` Message filter level set to **${level.toUpperCase()}**.`,
         flags: 64,
       });
     }

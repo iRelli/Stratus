@@ -65,7 +65,7 @@ module.exports = {
 
       await guild.members.ban(user.id, { reason });
       interaction.reply({
-        content: `✅ **${user.tag}** has been banned.`,
+        content: ` **${user.tag}** has been banned.`,
         flags: 64,
       });
 

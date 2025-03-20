@@ -104,7 +104,7 @@ module.exports = {
         if (logChannel) logChannel.send({ embeds: [embed] });
 
         return interaction.reply({
-          content: `✅ **${user.tag}** has been added as a moderator.`,
+          content: ` **${user.tag}** has been added as a moderator.`,
           flags: 64,
         });
       }
@@ -146,7 +146,7 @@ module.exports = {
         if (logChannel) logChannel.send({ embeds: [embed] });
 
         return interaction.reply({
-          content: `✅ **${user.tag}** has been removed as a moderator.`,
+          content: ` **${user.tag}** has been removed as a moderator.`,
           flags: 64,
         });
       }

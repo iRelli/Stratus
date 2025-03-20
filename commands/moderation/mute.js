@@ -73,7 +73,7 @@ module.exports = {
       if (!member.moderatable) {
         return interaction.reply({
           content:
-            '❌ I cannot mute this user. They may have a higher role or permissions.',
+            ' I cannot mute this user. They may have a higher role or permissions.',
           flags: 64,
         });
       }
@@ -81,7 +81,7 @@ module.exports = {
       const muteDuration = duration * 60 * 1000;
       await member.timeout(muteDuration, reason);
       interaction.reply({
-        content: `✅ **${user.tag}** has been muted for **${duration} minutes**.`,
+        content: ` **${user.tag}** has been muted for **${duration} minutes**.`,
         flags: 64,
       });
 

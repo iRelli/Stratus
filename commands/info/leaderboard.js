@@ -31,7 +31,7 @@ module.exports = {
 
       if (!guildId) {
         return interaction.editReply({
-          content: '❌ This command must be used in a server.',
+          content: ' This command must be used in a server.',
         });
       }
 
@@ -39,7 +39,7 @@ module.exports = {
         const rawLeaderboard = await Levels.fetchLeaderboard(guildId, 10);
         if (!rawLeaderboard.length) {
           return interaction.editReply({
-            content: '❌ No leaderboard data found. Start chatting to earn XP!',
+            content: ' No leaderboard data found. Start chatting to earn XP!',
           });
         }
 
@@ -114,14 +114,14 @@ module.exports = {
 
         await Levels.deleteGuild(guildId);
         return interaction.editReply({
-          content: '✅ The leaderboard XP has been successfully reset!',
+          content: ' The leaderboard XP has been successfully reset!',
         });
       }
     } catch (error) {
-      console.error('❌ Error generating leaderboard:', error);
+      console.error(' Error generating leaderboard:', error);
       return interaction.editReply({
         content:
-          '❌ An error occurred while generating the leaderboard. Try again later.',
+          ' An error occurred while generating the leaderboard. Try again later.',
       });
     }
   },

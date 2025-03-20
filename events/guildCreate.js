@@ -4,7 +4,7 @@ const Moderation = require('../models/Moderation');
 module.exports = {
   name: Events.GuildCreate,
   async execute(guild) {
-    console.log(`✅ Joined a new guild: ${guild.name} (${guild.id})`);
+    console.log(` Joined a new guild: ${guild.name} (${guild.id})`);
     await ensureGuildConfig(guild.id);
   },
 };
@@ -34,13 +34,10 @@ async function ensureGuildConfig(guildId) {
 
       await moderationData.save();
       console.log(
-        `✅ Created default moderation settings for new guild: ${guildId}`,
+        ` Created default moderation settings for new guild: ${guildId}`,
       );
     }
   } catch (error) {
-    console.error(
-      `❌ Error ensuring moderation settings for ${guildId}:`,
-      error,
-    );
+    console.error(` Error ensuring moderation settings for ${guildId}:`, error);
   }
 }

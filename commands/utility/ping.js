@@ -3,7 +3,7 @@ const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('ping')
-    .setDescription("Checks the bot's latency."), //changed
+    .setDescription("Checks the bot's latency."),
 
   async execute(interaction) {
     try {
@@ -27,7 +27,7 @@ module.exports = {
     } catch (error) {
       console.error('Error executing /ping command:', error);
       return interaction.reply({
-        content: '❌ An error occurred while fetching the latency.',
+        content: ' An error occurred while fetching the latency.',
         flags: 64,
       });
     }

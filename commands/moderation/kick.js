@@ -66,7 +66,7 @@ module.exports = {
       const member = await guild.members.fetch(user.id);
       await member.kick(reason);
       interaction.reply({
-        content: `✅ **${user.tag}** has been kicked.`,
+        content: ` **${user.tag}** has been kicked.`,
         flags: 64,
       });
 
